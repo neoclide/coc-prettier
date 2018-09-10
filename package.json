@@ -1,0 +1,183 @@
+{
+  "name": "coc-prettier",
+  "version": "1.0.0",
+  "description": "prettier extension for coc",
+  "main": "lib/index.js",
+  "publisher": "chemzqm",
+  "engines": {
+    "coc": ">= 0.0.16"
+  },
+  "scripts": {
+    "clean": "rimraf lib",
+    "build": "tsc -p tsconfig.json",
+    "prepare": "yarn clean && yarn build"
+  },
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Prettier - Code formatter configuration",
+      "properties": {
+        "prettier.disableLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "vue"
+          ],
+          "description": "A list of languages IDs to disable this extension on",
+          "scope": "window"
+        },
+        "prettier.eslintIntegration": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use 'prettier-eslint' instead of 'prettier'. Other settings will only be fallbacks in case they could not be inferred from eslint rules.",
+          "scope": "resource"
+        },
+        "prettier.tslintIntegration": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use 'prettier-tslint' instead of 'prettier'. Other settings will only be fallbacks in case they could not be inferred from tslint rules.",
+          "scope": "resource"
+        },
+        "prettier.stylelintIntegration": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use 'prettier-stylelint' instead of 'prettier'. Other settings will only be fallbacks in case they could not be inferred from stylelint rules.",
+          "scope": "resource"
+        },
+        "prettier.requireConfig": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require a 'prettierconfig' to format",
+          "scope": "resource"
+        },
+        "prettier.ignorePath": {
+          "type": "string",
+          "default": ".prettierignore",
+          "description": "Path to a .prettierignore or similar file",
+          "scope": "resource"
+        },
+        "prettier.printWidth": {
+          "type": "integer",
+          "default": 80,
+          "description": "Fit code within this line limit",
+          "scope": "resource"
+        },
+        "prettier.tabWidth": {
+          "type": "integer",
+          "default": 2,
+          "description": "Number of spaces it should use per tab",
+          "scope": "resource"
+        },
+        "prettier.singleQuote": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, will use single instead of double quotes",
+          "scope": "resource"
+        },
+        "prettier.trailingComma": {
+          "type": "string",
+          "enum": [
+            "none",
+            "es5",
+            "all"
+          ],
+          "default": "none",
+          "description": "Controls the printing of trailing commas wherever possible.\n Valid options:\n    'none' - No trailing commas\n    'es5' - Trailing commas where valid in ES5 (objects, arrays, etc)\n    'all' - Trailing commas wherever possible (function arguments)",
+          "scope": "resource"
+        },
+        "prettier.bracketSpacing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Controls the printing of spaces inside object literals",
+          "scope": "resource"
+        },
+        "prettier.jsxBracketSameLine": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, puts the `>` of a multi-line jsx element at the end of the last line instead of being alone on the next line",
+          "scope": "resource"
+        },
+        "prettier.parser": {
+          "type": "string",
+          "enum": [
+            "babylon",
+            "flow"
+          ],
+          "default": "babylon",
+          "description": "Override the parser. You shouldn't have to change this setting.",
+          "scope": "resource"
+        },
+        "prettier.semi": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to add a semicolon at the end of every line",
+          "scope": "resource"
+        },
+        "prettier.useTabs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Indent lines with tabs",
+          "scope": "resource"
+        },
+        "prettier.proseWrap": {
+          "type": "string",
+          "enum": [
+            "preserve",
+            "always",
+            "never"
+          ],
+          "default": "preserve",
+          "description": "(Markdown) wrap prose over multiple lines"
+        },
+        "prettier.arrowParens": {
+          "type": "string",
+          "enum": [
+            "avoid",
+            "always"
+          ],
+          "default": "avoid",
+          "description": "Include parentheses around a sole arrow function parameter",
+          "scope": "resource"
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": ".prettierrc",
+        "url": "http://json.schemastore.org/prettierrc"
+      },
+      {
+        "fileMatch": ".prettierrc.json",
+        "url": "http://json.schemastore.org/prettierrc"
+      }
+    ]
+  },
+  "author": "chemzqm@gmail.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@chemzqm/tsconfig": "^0.0.3",
+    "@chemzqm/tslint-config": "^1.0.17",
+    "@types/node": "^10.9.4",
+    "coc.nvim": "^0.0.15",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3"
+  },
+  "dependencies": {
+    "ignore": "^5.0.2",
+    "prettier": "^1.14.2",
+    "prettier-eslint": "^8.8.2",
+    "prettier-stylelint": "^0.4.2",
+    "prettier-tslint": "^0.4.0",
+    "read-pkg-up": "^4.0.0",
+    "resolve": "^1.8.1",
+    "tslib": "^1.9.3",
+    "vscode-languageserver-protocol": "^3.12.0",
+    "vscode-uri": "^1.0.6"
+  }
+}
