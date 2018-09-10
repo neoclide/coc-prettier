@@ -9,7 +9,7 @@ import {
 } from './types.d'
 
 export function getConfig(uri?: Uri): PrettierVSCodeConfig {
-  return workspace.getConfiguration('prettier', uri.toString()) as any
+  return workspace.getConfiguration('prettier', uri ? uri.toString() : undefined) as any
 }
 
 export function getParsersFromLanguageId(
