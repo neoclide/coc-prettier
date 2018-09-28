@@ -33,22 +33,25 @@ export function getParsersFromLanguageId(
   return language.parsers
 }
 
-export function allEnabledLanguages(): string[] {
+export function enabledLanguages(): string[] {
+  const { disableLanguages } = getConfig()
   return getSupportLanguages().reduce(
     (ids, language) => [...ids, ...(language.vscodeLanguageIds || [])],
     [] as string[]
-  )
+  ).filter(x => disableLanguages.indexOf(x) == -1)
 }
 
-export function rangeSupportedLanguages(): string[] {
+export function rangeLanguages(): string[] {
+  const { disableLanguages } = getConfig()
   return [
     'javascript',
-    'javascriptreact',
+    'javascript.jsx',
     'typescript',
-    'typescriptreact',
+    'typescript.jsx',
+    'typescript.tsx',
     'json',
     'graphql',
-  ]
+  ].filter(x => disableLanguages.indexOf(x) == -1)
 }
 
 export function getGroup(group: string): PrettierSupportInfo['languages'] {

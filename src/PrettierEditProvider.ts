@@ -3,7 +3,7 @@ import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } f
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
 import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
-import { getConfig, getParsersFromLanguageId } from './utils'
+import { getConfig, getParsersFromLanguageId, enabledLanguages, rangeLanguages } from './utils'
 import { workspace } from 'coc.nvim'
 import path from 'path'
 import Uri from 'vscode-uri'
@@ -258,6 +258,10 @@ class PrettierEditProvider
     _options: FormattingOptions,
     _token: CancellationToken
   ): Promise<TextEdit[]> {
+    let languages = rangeLanguages()
+    if (languages.indexOf(document.languageId) == -1) {
+      return Promise.resolve(null)
+    }
     return this._provideEdits(document, {
       rangeStart: document.offsetAt(range.start),
       rangeEnd: document.offsetAt(range.end),
@@ -269,6 +273,10 @@ class PrettierEditProvider
     _options: FormattingOptions,
     _token: CancellationToken
   ): Promise<TextEdit[]> {
+    let languages = enabledLanguages()
+    if (languages.indexOf(document.languageId) == -1) {
+      return Promise.resolve(null)
+    }
     return this._provideEdits(document, {})
   }
 
@@ -282,7 +290,12 @@ class PrettierEditProvider
     }
     return format(document.getText(), document, options).then(code => [
       TextEdit.replace(fullDocumentRange(document), code),
-    ])
+    ]).then(edits => {
+      if (edits && edits.length) {
+        workspace.showMessage('Formatted by prettier')
+      }
+      return edits
+    })
   }
 }
 

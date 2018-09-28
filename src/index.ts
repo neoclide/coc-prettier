@@ -1,10 +1,9 @@
-import { ExtensionContext, languages, workspace } from 'coc.nvim'
-import { Disposable, DocumentFilter, DocumentSelector } from 'vscode-languageserver-protocol'
+import { ExtensionContext, languages } from 'coc.nvim'
+import { Disposable, DocumentSelector } from 'vscode-languageserver-protocol'
 import configFileListener from './configCacheHandler'
 import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
 import EditProvider from './PrettierEditProvider'
-import { allEnabledLanguages, getConfig, rangeSupportedLanguages } from './utils'
 
 interface Selectors {
   rangeLanguageSelector: DocumentSelector
@@ -30,41 +29,10 @@ function disposeHandlers(): void {
  * Build formatter selectors
  */
 function selectors(): Selectors {
-  const allLanguages = allEnabledLanguages()
-  const allRangeLanguages = rangeSupportedLanguages()
-  const { disableLanguages } = getConfig()
-  const globalLanguageSelector = allLanguages.filter(
-    l => !disableLanguages.includes(l)
-  )
-  const globalRangeLanguageSelector = allRangeLanguages.filter(
-    l => !disableLanguages.includes(l)
-  )
-  if (workspace.workspaceFolder === undefined) {
-    // no workspace opened
-    return {
-      languageSelector: globalLanguageSelector,
-      rangeLanguageSelector: globalRangeLanguageSelector,
-    }
-  }
-
-  // at least 1 workspace
-  const untitledLanguageSelector: DocumentFilter[] = globalLanguageSelector.map(
-    l => ({ language: l, scheme: 'untitled' })
-  )
-  const untitledRangeLanguageSelector: DocumentFilter[] = globalRangeLanguageSelector.map(
-    l => ({ language: l, scheme: 'untitled' })
-  )
-  const fileLanguageSelector: DocumentFilter[] = globalLanguageSelector.map(
-    l => ({ language: l, scheme: 'file' })
-  )
-  const fileRangeLanguageSelector: DocumentFilter[] = globalRangeLanguageSelector.map(
-    l => ({ language: l, scheme: 'file' })
-  )
+  let selector = [{ language: '*', scheme: 'file' }, { language: '*', scheme: 'untitled' }]
   return {
-    languageSelector: untitledLanguageSelector.concat(fileLanguageSelector),
-    rangeLanguageSelector: untitledRangeLanguageSelector.concat(
-      fileRangeLanguageSelector
-    ),
+    languageSelector: selector,
+    rangeLanguageSelector: selector
   }
 }
 
