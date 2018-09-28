@@ -74,7 +74,7 @@ function mergeConfig(
  * @param path formatting file's path
  * @returns {string} formatted text
  */
-async function format(
+export async function format(
   text: string,
   { languageId, uri }: TextDocument,
   customOptions: Partial<PrettierConfig>
@@ -84,12 +84,8 @@ async function format(
   const fileName = u.fsPath
   const vscodeConfig: PrettierVSCodeConfig = getConfig(u)
   const localPrettier = requireLocalPkg(path.dirname(fileName), 'prettier') as Prettier
-
-  // This has to stay, as it allows to skip in sub workspaceFolders. Sadly noop.
-  // wf1  (with "lang") -> glob: "wf1/**"
-  // wf1/wf2  (without "lang") -> match "wf1/**"
-  if (vscodeConfig.disableLanguages.includes(languageId)) {
-    return text
+  if (languageId == 'typescript.tsx' || languageId == 'typescript.jsx') {
+    languageId = 'typescriptreact'
   }
 
   const dynamicParsers = getParsersFromLanguageId(
@@ -236,7 +232,7 @@ async function format(
   )
 }
 
-function fullDocumentRange(document: TextDocument): Range {
+export function fullDocumentRange(document: TextDocument): Range {
   const lastLineId = document.lineCount - 1
   let doc = workspace.getDocument(document.uri)
 

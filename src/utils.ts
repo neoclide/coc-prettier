@@ -33,10 +33,17 @@ export function getParsersFromLanguageId(
   return language.parsers
 }
 
+export function allLanguages(): string[] {
+  return getSupportLanguages().reduce(
+    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['typescript.jsx', 'typescript.tsx']],
+    [] as string[]
+  )
+}
+
 export function enabledLanguages(): string[] {
   const { disableLanguages } = getConfig()
   return getSupportLanguages().reduce(
-    (ids, language) => [...ids, ...(language.vscodeLanguageIds || [])],
+    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['typescript.jsx', 'typescript.tsx']],
     [] as string[]
   ).filter(x => disableLanguages.indexOf(x) == -1)
 }
