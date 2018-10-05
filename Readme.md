@@ -14,13 +14,13 @@ Run vim command:
 
 ## Usage
 
-### Setup format command in your `init.vim` or `.vimrc`
+### Setup `Prettier` command in your `init.vim` or `.vimrc`
 
 ```
-command! -nargs=0 Format                               :call     CocAction('format')
+command! -nargs=0 Prettier :call CocAction('runCommand', 'prettier.formatFile')
 ```
 
-Then you can use `:Format` to format current buffer.
+Then you can use `:Prettier` to format current buffer.
 
 ### Remap keys for range format in your `init.vim` or `.vimrc`
 
