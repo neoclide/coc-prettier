@@ -1,6 +1,6 @@
 {
   "name": "coc-prettier",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "prettier extension for coc",
   "main": "lib/index.js",
   "publisher": "chemzqm",
