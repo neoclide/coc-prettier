@@ -83,7 +83,7 @@ export function safeExecution(
  */
 export function setupErrorHandler(): Disposable {
   // Setup the outputChannel
-  outputChannel = workspace.createOutputChannel('Prettier')
+  outputChannel = workspace.createOutputChannel('prettier')
 
   return commands.registerCommand('prettier.open-output', () => {
     outputChannel.show()
