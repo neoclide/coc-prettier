@@ -62,9 +62,6 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand('prettier.formatFile', async () => {
       let document = await workspace.document
       let languageId = document.filetype
-      if (languageId == 'typescript.jsx' || languageId == 'typescript.tsx') {
-        languageId = 'typescriptreact'
-      }
       let languages = allLanguages()
       if (languages.indexOf(languageId) == -1) {
         workspace.showMessage(`${document.filetype} not supported by prettier`, 'error')

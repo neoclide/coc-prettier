@@ -35,7 +35,7 @@ export function getParsersFromLanguageId(
 
 export function allLanguages(): string[] {
   return getSupportLanguages().reduce(
-    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['typescript.jsx', 'typescript.tsx']],
+    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['typescriptreact', 'typescriptreact']],
     [] as string[]
   )
 }
@@ -43,7 +43,7 @@ export function allLanguages(): string[] {
 export function enabledLanguages(): string[] {
   const { disableLanguages } = getConfig()
   return getSupportLanguages().reduce(
-    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['typescript.jsx', 'typescript.tsx']],
+    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['typescriptreact', 'typescriptreact']],
     [] as string[]
   ).filter(x => disableLanguages.indexOf(x) == -1)
 }
@@ -52,10 +52,9 @@ export function rangeLanguages(): string[] {
   const { disableLanguages } = getConfig()
   return [
     'javascript',
-    'javascript.jsx',
+    'javascriptreact',
     'typescript',
-    'typescript.jsx',
-    'typescript.tsx',
+    'typescriptreact',
     'json',
     'graphql',
   ].filter(x => disableLanguages.indexOf(x) == -1)

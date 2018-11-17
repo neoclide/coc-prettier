@@ -31,6 +31,9 @@ nmap <leader>f  <Plug>(coc-format-selected)
 
 Then your can `<leader>f` for range format.
 
+Prettier range format only support languageId including: `javascript`,
+`javascriptreact`, `typescript`, `typescriptreact`, `json` and `graphql`.
+
 ### Update your `coc-settings.json` for format on save.
 
 Open settings file with:

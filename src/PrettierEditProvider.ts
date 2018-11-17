@@ -84,9 +84,6 @@ export async function format(
   const fileName = u.fsPath
   const vscodeConfig: PrettierVSCodeConfig = getConfig(u)
   const localPrettier = requireLocalPkg(path.dirname(fileName), 'prettier') as Prettier
-  if (languageId == 'typescript.tsx' || languageId == 'typescript.jsx') {
-    languageId = 'typescriptreact'
-  }
 
   const dynamicParsers = getParsersFromLanguageId(
     languageId,
