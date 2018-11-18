@@ -1,4 +1,4 @@
-# Prettier formatter for Visual Studio Code
+# Prettier formatter for coc.nvim
 
 Coc extension to format your JavaScript / TypeScript / CSS / JSON using [Prettier](https://github.com/prettier/prettier).
 
