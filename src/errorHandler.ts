@@ -24,15 +24,13 @@ function addFilePath(msg: string, fileName: string): string {
  *
  * @param message The message to append to the output channel
  */
-export function addToOutput(message: string): void {
-  const title = `${new Date().toLocaleString()}:`
+export function addToOutput(message: string, type = 'Trace'): void {
+  const title = `${type} - ${new Date().toLocaleString()}:`
 
   // Create a sort of title, to differentiate between messages
-  outputChannel.appendLine(title)
-  outputChannel.appendLine('-'.repeat(title.length))
-
+  outputChannel.appendLine('')
   // Append actual output
-  outputChannel.appendLine(`${message}\n`)
+  outputChannel.appendLine(`[${title}] ${message}\n`)
 }
 
 /**
@@ -55,7 +53,7 @@ export function safeExecution(
         return returnValue
       })
       .catch((err: Error) => {
-        addToOutput(addFilePath(err.message, fileName))
+        addToOutput(addFilePath(err.message, fileName), 'Error')
         // updateStatusBar('Prettier: $(x)')
 
         return defaultText
@@ -69,7 +67,7 @@ export function safeExecution(
 
     return returnValue
   } catch (err) {
-    addToOutput(addFilePath(err.message, fileName))
+    addToOutput(addFilePath(err.message, fileName), 'Error')
     // updateStatusBar('Prettier: $(x)')
 
     return defaultText

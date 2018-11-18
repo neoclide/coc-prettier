@@ -17,7 +17,7 @@ Run vim command:
 ### Setup `Prettier` command in your `init.vim` or `.vimrc`
 
 ```
-command! -nargs=0 Prettier :call CocAction('runCommand', 'prettier.formatFile')
+command! -nargs=0 Prettier :CocCommand prettier.formatFile
 ```
 
 Then you can use `:Prettier` to format current buffer.
@@ -47,6 +47,14 @@ Add:
 ```
 
 to setup the languages which you want to format on save.
+
+**Note:** prettier extension have lower priority, if the document have other
+registered document format provider, prettier would not work.
+
+To check the format is done by prettier, check out the output message after
+format, which should contains `Formatted by prettier`.
+
+To make prettier do the format, use command `:CocCommand prettier.formatFile`
 
 ## Settings
 

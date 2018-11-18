@@ -126,9 +126,7 @@ export async function format(
   })
 
   if (error) {
-    addToOutput(
-      `Failed to resolve config for ${fileName}. Falling back to the default config settings.`
-    )
+    addToOutput(`Failed to resolve config for ${fileName}. Falling back to the default config settings.`, 'Error')
   }
 
   const prettierOptions = mergeConfig(
@@ -209,7 +207,7 @@ export async function format(
           bundledPrettier.version
           }.`
 
-        addToOutput(warningMessage)
+        addToOutput(warningMessage, 'Warning')
 
         // setUsedModule('prettier', bundledPrettier.version, true)
 
@@ -287,6 +285,8 @@ class PrettierEditProvider
       if (edits && edits.length) {
         workspace.showMessage('Formatted by prettier')
       }
+      addToOutput(`Formatted file: ${document.uri}`)
+      addToOutput(`Prettier format edits: ${JSON.stringify(edits, null, 2)}`)
       return edits
     })
   }
