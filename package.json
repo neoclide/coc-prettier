@@ -9,7 +9,7 @@
     "prettier"
   ],
   "engines": {
-    "coc": ">= 0.0.16"
+    "coc": ">= 0.0.30"
   },
   "scripts": {
     "clean": "rimraf lib",
@@ -57,6 +57,12 @@
           "type": "boolean",
           "default": false,
           "description": "Require a 'prettierconfig' to format",
+          "scope": "resource"
+        },
+        "prettier.statusItemText": {
+          "type": "string",
+          "default": "Prettier",
+          "description": "Text shown in status item.",
           "scope": "resource"
         },
         "prettier.ignorePath": {
@@ -166,15 +172,15 @@
   "devDependencies": {
     "@chemzqm/tsconfig": "^0.0.3",
     "@chemzqm/tslint-config": "^1.0.17",
-    "@types/node": "^10.11.2",
-    "coc.nvim": "^0.0.18",
+    "@types/node": "^10.12.9",
+    "coc.nvim": "^0.0.29",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "typescript": "^3.1.1"
+    "typescript": "^3.1.6"
   },
   "dependencies": {
-    "ignore": "^5.0.2",
-    "prettier": "^1.14.3",
+    "ignore": "^5.0.4",
+    "prettier": "^1.15.2",
     "prettier-eslint": "^8.8.2",
     "prettier-stylelint": "^0.4.2",
     "prettier-tslint": "^0.4.0",
