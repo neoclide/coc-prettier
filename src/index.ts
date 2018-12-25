@@ -70,11 +70,13 @@ export function activate(context: ExtensionContext): void {
     const { languageSelector, rangeLanguageSelector } = selectors()
     rangeFormatterHandler = languages.registerDocumentRangeFormatProvider(
       rangeLanguageSelector,
-      editProvider
+      editProvider,
+      1
     )
     formatterHandler = languages.registerDocumentFormatProvider(
       languageSelector,
-      editProvider
+      editProvider,
+      1
     )
   }
   registerFormatter()
