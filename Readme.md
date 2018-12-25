@@ -123,6 +123,11 @@ Include parentheses around a sole arrow function parameter
 
 These settings are specific to Coc and need to be set in the Coc settings file. See the [documentation](https://github.com/neoclide/coc.nvim/wiki/Using-configuration-file) for how to do that.
 
+#### prettier.formatterPriority (default: 1) - priority of fomatter
+
+Change it to `-1` if you don't want prettier to have higher priority than
+formatter provided by other language server.
+
 #### prettier.eslintIntegration (default: false) - JavaScript and TypeScript only
 
 Use _[prettier-eslint](https://github.com/prettier/prettier-eslint)_ instead of _prettier_.

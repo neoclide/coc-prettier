@@ -24,6 +24,11 @@
       "type": "object",
       "title": "Prettier - Code formatter configuration",
       "properties": {
+        "prettier.formatterPriority": {
+          "type": "number",
+          "default": 1,
+          "description": "Priority of format provider, default to 1 that higher than other languageserver formatter, change to -1 to make it lower priority."
+        },
         "prettier.disableLanguages": {
           "type": "array",
           "items": {

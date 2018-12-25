@@ -52,7 +52,8 @@ export function activate(context: ExtensionContext): void {
   const editProvider = new EditProvider(fileIsIgnored)
   const statusItem = workspace.createStatusBarItem(0)
   const config = workspace.getConfiguration('prettier')
-  statusItem.text = config.get('statusItemText', 'Prettier')
+  statusItem.text = config.get<string>('statusItemText', 'Prettier')
+  let priority = config.get<number>('formatterPriority', 1)
 
   async function checkDocuemnt(): Promise<void> {
     await wait(30)
@@ -71,12 +72,12 @@ export function activate(context: ExtensionContext): void {
     rangeFormatterHandler = languages.registerDocumentRangeFormatProvider(
       rangeLanguageSelector,
       editProvider,
-      1
+      priority
     )
     formatterHandler = languages.registerDocumentFormatProvider(
       languageSelector,
       editProvider,
-      1
+      priority
     )
   }
   registerFormatter()
