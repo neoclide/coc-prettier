@@ -4,7 +4,7 @@ import configFileListener from './configCacheHandler'
 import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
 import EditProvider, { format, fullDocumentRange } from './PrettierEditProvider'
-import { allLanguages, enabledLanguages } from './utils'
+import { allLanguages, rangeLanguages, enabledLanguages } from './utils'
 
 interface Selectors {
   rangeLanguageSelector: DocumentSelector
@@ -32,10 +32,16 @@ function disposeHandlers(): void {
  * Build formatter selectors
  */
 function selectors(): Selectors {
-  let selector = [{ language: '*', scheme: 'file' }, { language: '*', scheme: 'untitled' }]
+  let languageSelector = enabledLanguages().reduce((curr, language) => {
+    return curr.concat([{ language, scheme: 'file' }, { language, scheme: 'untitled' }])
+  }, [])
+
+  let rangeLanguageSelector = rangeLanguages().reduce((curr, language) => {
+    return curr.concat([{ language, scheme: 'file' }, { language, scheme: 'untitled' }])
+  }, [])
   return {
-    languageSelector: selector,
-    rangeLanguageSelector: selector
+    languageSelector,
+    rangeLanguageSelector,
   }
 }
 
@@ -69,11 +75,13 @@ export function activate(context: ExtensionContext): void {
   function registerFormatter(): void {
     disposeHandlers()
     const { languageSelector, rangeLanguageSelector } = selectors()
+
     rangeFormatterHandler = languages.registerDocumentRangeFormatProvider(
       rangeLanguageSelector,
       editProvider,
       priority
     )
+
     formatterHandler = languages.registerDocumentFormatProvider(
       languageSelector,
       editProvider,

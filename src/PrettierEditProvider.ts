@@ -1,12 +1,12 @@
+import { workspace } from 'coc.nvim'
 import { DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider } from 'coc.nvim/lib/provider'
+import path from 'path'
 import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } from 'vscode-languageserver-protocol'
+import Uri from 'vscode-uri'
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
 import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
-import { getConfig, getParsersFromLanguageId, enabledLanguages, rangeLanguages } from './utils'
-import { workspace } from 'coc.nvim'
-import path from 'path'
-import Uri from 'vscode-uri'
+import { getConfig, getParsersFromLanguageId } from './utils'
 
 const bundledPrettier = require('prettier') as Prettier
 /**
@@ -249,10 +249,6 @@ class PrettierEditProvider
     _options: FormattingOptions,
     _token: CancellationToken
   ): Promise<TextEdit[]> {
-    let languages = rangeLanguages()
-    if (languages.indexOf(document.languageId) == -1) {
-      return Promise.resolve(null)
-    }
     return this._provideEdits(document, {
       rangeStart: document.offsetAt(range.start),
       rangeEnd: document.offsetAt(range.end),
@@ -264,10 +260,6 @@ class PrettierEditProvider
     _options: FormattingOptions,
     _token: CancellationToken
   ): Promise<TextEdit[]> {
-    let languages = enabledLanguages()
-    if (languages.indexOf(document.languageId) == -1) {
-      return Promise.resolve(null)
-    }
     return this._provideEdits(document, {})
   }
 
