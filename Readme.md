@@ -161,6 +161,12 @@ _Note: Disabling a language enabled in a parent folder will prevent formatting i
 
 This extension will use prettier from your project's local dependencies. Should prettier not be installed locally with your project's dependencies, a copy will be bundled with the extension.
 
+### ESLint and TSLint Integration
+
+`prettier-eslint` and `prettier-tslint` are included with the installation of this extension. There is no need for a separate local or global install of either for functionality.
+
+`eslint`, `tslint`, and all peer dependencies required by your specific configuration must be installed locally. Global installations will not be recognized.
+
 ## Contribute
 
 Feel free to open issues or PRs!

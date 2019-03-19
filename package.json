@@ -117,6 +117,32 @@
           "description": "If true, puts the `>` of a multi-line jsx element at the end of the last line instead of being alone on the next line",
           "scope": "resource"
         },
+        "prettier.jsxSingleQuote": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use single quotes instead of double quotes in JSX"
+        },
+        "prettier.htmlWhitespaceSensitivity": {
+          "type": "string",
+          "enum": [
+            "css",
+            "strict",
+            "ignore"
+          ],
+          "default": "css",
+          "description": "Specify the global whitespace sensitivity for HTML files.\n Valid options: \n'css' - Respect the default value of CSS display property. \n'strict' - Whitespaces are considered sensitive. \n'ignore' - Whitespaces are considered insensitive."
+        },
+        "prettier.endOfLine": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "lf",
+            "crlf",
+            "cr"
+          ],
+          "default": "auto",
+          "description": "Specify the end of line used by prettier"
+        },
         "prettier.parser": {
           "type": "string",
           "enum": [
@@ -169,6 +195,10 @@
       {
         "fileMatch": ".prettierrc.json",
         "url": "http://json.schemastore.org/prettierrc"
+      },
+      {
+        "fileMatch": "package.json",
+        "url": "./package-json-schema.json"
       }
     ]
   },
@@ -176,23 +206,23 @@
   "license": "MIT",
   "devDependencies": {
     "@chemzqm/tsconfig": "^0.0.3",
-    "@chemzqm/tslint-config": "^1.0.17",
-    "@types/node": "^10.12.15",
-    "coc.nvim": "^0.0.39",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "^3.2.2"
+    "@chemzqm/tslint-config": "^1.0.18",
+    "@types/node": "^11.11.3",
+    "coc.nvim": "^0.0.58",
+    "rimraf": "^2.6.3",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.3333"
   },
   "dependencies": {
-    "ignore": "^5.0.4",
-    "prettier": "^1.15.3",
+    "ignore": "^5.0.6",
+    "prettier": "^1.16.4",
     "prettier-eslint": "^8.8.2",
     "prettier-stylelint": "^0.4.2",
-    "prettier-tslint": "^0.4.1",
+    "prettier-tslint": "^0.4.2",
     "read-pkg-up": "^4.0.0",
-    "resolve": "^1.8.1",
+    "resolve": "^1.10.0",
     "tslib": "^1.9.3",
-    "vscode-languageserver-protocol": "^3.14.1",
+    "vscode-languageserver-protocol": "^3.15.0-next.1",
     "vscode-uri": "^1.0.6"
   }
 }
