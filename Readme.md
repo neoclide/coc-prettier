@@ -26,7 +26,7 @@ Then you can use `:Prettier` to format current buffer.
 
 ```
 vmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f :Prettier<CR>
 ```
 
 Then your can `<leader>f` for range format.
