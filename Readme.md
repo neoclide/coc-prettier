@@ -157,6 +157,10 @@ Files which match will not be formatted. Set to `null` to not read ignore files.
 A list of languages IDs to disable this extension on. Restart required.
 _Note: Disabling a language enabled in a parent folder will prevent formatting instead of letting any other formatter to run_
 
+#### prettier.statusItemText (default: "Prettier")
+
+Text of status item indicating current buffer can't be formatted by prettier.
+
 ## Prettier resolution
 
 This extension will use prettier from your project's local dependencies. Should prettier not be installed locally with your project's dependencies, a copy will be bundled with the extension.
