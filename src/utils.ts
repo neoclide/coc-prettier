@@ -1,6 +1,5 @@
-import { workspace } from 'coc.nvim'
+import { workspace, Uri } from 'coc.nvim'
 import { basename } from 'path'
-import Uri from 'vscode-uri'
 import {
   PrettierVSCodeConfig,
   Prettier,

@@ -1,8 +1,7 @@
-import { workspace } from 'coc.nvim'
+import { Uri, workspace } from 'coc.nvim'
 import { DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider } from 'coc.nvim/lib/provider'
 import path from 'path'
 import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } from 'vscode-languageserver-protocol'
-import Uri from 'vscode-uri'
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
 import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
@@ -83,7 +82,7 @@ export async function format(
   const isUntitled = u.scheme == 'untitled'
   const fileName = u.fsPath
   const vscodeConfig: PrettierVSCodeConfig = getConfig(u)
-  const localPrettier = requireLocalPkg(path.dirname(fileName), 'prettier') as Prettier
+  const localPrettier = await requireLocalPkg(path.dirname(fileName), 'prettier') as Prettier
 
   const dynamicParsers = getParsersFromLanguageId(
     languageId,
