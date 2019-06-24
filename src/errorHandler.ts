@@ -1,5 +1,5 @@
-import { commands, OutputChannel, workspace } from 'coc.nvim'
-import { Disposable } from 'vscode-languageserver-protocol'
+import {commands, OutputChannel, workspace} from 'coc.nvim'
+import {Disposable} from 'vscode-languageserver-protocol'
 
 let outputChannel: OutputChannel
 /**
@@ -25,6 +25,7 @@ function addFilePath(msg: string, fileName: string): string {
  * @param message The message to append to the output channel
  */
 export function addToOutput(message: string, type = 'Trace'): void {
+  if (!outputChannel) return
   const title = `${type} - ${new Date().toLocaleString()}:`
 
   // Create a sort of title, to differentiate between messages

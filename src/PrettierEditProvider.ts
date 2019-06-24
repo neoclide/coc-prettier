@@ -1,11 +1,12 @@
-import { Uri, workspace } from 'coc.nvim'
-import { DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider } from 'coc.nvim/lib/provider'
+import {Uri, workspace} from 'coc.nvim'
+import {DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider} from 'coc.nvim/lib/provider'
 import path from 'path'
-import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } from 'vscode-languageserver-protocol'
-import { addToOutput, safeExecution } from './errorHandler'
-import { requireLocalPkg } from './requirePkg'
-import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
-import { getConfig, getParsersFromLanguageId } from './utils'
+import {CancellationToken, FormattingOptions, Range, TextDocument, TextEdit} from 'vscode-languageserver-protocol'
+import {addToOutput, safeExecution} from './errorHandler'
+import {requireLocalPkg} from './requirePkg'
+import {ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig} from './types.d'
+import {getConfig, getParsersFromLanguageId} from './utils'
+import semver from 'semver'
 
 const bundledPrettier = require('prettier') as Prettier
 /**
@@ -17,11 +18,11 @@ const STYLE_PARSERS: ParserOption[] = ['postcss', 'css', 'less', 'scss']
  * @param filePath file's path
  */
 async function hasPrettierConfig(filePath: string): Promise<boolean> {
-  const { config } = await resolveConfig(filePath)
+  const {config} = await resolveConfig(filePath)
   return config !== null
 }
 
-interface ResolveConfigResult { config: PrettierConfig | null; error?: Error }
+interface ResolveConfigResult {config: PrettierConfig | null; error?: Error}
 
 /**
  * Resolves the prettierconfig for the given file.
@@ -30,13 +31,13 @@ interface ResolveConfigResult { config: PrettierConfig | null; error?: Error }
  */
 async function resolveConfig(
   filePath: string,
-  options?: { editorconfig?: boolean }
+  options?: {editorconfig?: boolean}
 ): Promise<ResolveConfigResult> {
   try {
     const config = await bundledPrettier.resolveConfig(filePath, options)
-    return { config }
+    return {config}
   } catch (error) {
-    return { config: null, error }
+    return {config: null, error}
   }
 }
 
@@ -61,7 +62,7 @@ function mergeConfig(
 ): any {
   return hasPrettierConfig
     ? Object.assign(
-      { parser: vscodeConfig.parser }, // always merge our inferred parser in
+      {parser: vscodeConfig.parser}, // always merge our inferred parser in
       prettierConfig,
       additionalConfig
     )
@@ -75,7 +76,7 @@ function mergeConfig(
  */
 export async function format(
   text: string,
-  { languageId, uri }: TextDocument,
+  {languageId, uri}: TextDocument,
   customOptions: Partial<PrettierConfig>
 ): Promise<string> {
   let u = Uri.parse(uri)
@@ -120,7 +121,7 @@ export async function format(
     return text
   }
 
-  const { config: fileOptions, error } = await resolveConfig(fileName, {
+  const {config: fileOptions, error} = await resolveConfig(fileName, {
     editorconfig: true,
   })
 
@@ -217,6 +218,28 @@ export async function format(
     )
   }
 
+  if (semver.gt(bundledPrettier.version, localPrettier.version)) {
+    return safeExecution(
+      () => {
+        const warningMessage =
+          `prettier@${
+          localPrettier.version
+          } version lower than bundled prettier, ` +
+          `Falling back to bundled prettier@${
+          bundledPrettier.version
+          }.`
+
+        addToOutput(warningMessage, 'Warning')
+
+        // setUsedModule('prettier', bundledPrettier.version, true)
+
+        return bundledPrettier.format(text, prettierOptions)
+      },
+      text,
+      fileName
+    )
+  }
+
   // setUsedModule('prettier', localPrettier.version, false)
 
   return safeExecution(
@@ -231,8 +254,8 @@ export function fullDocumentRange(document: TextDocument): Range {
   let doc = workspace.getDocument(document.uri)
 
   return Range.create(
-    { character: 0, line: 0 },
-    { character: doc.getline(lastLineId).length, line: lastLineId }
+    {character: 0, line: 0},
+    {character: doc.getline(lastLineId).length, line: lastLineId}
   )
 }
 
@@ -240,7 +263,7 @@ class PrettierEditProvider
   implements
   DocumentRangeFormattingEditProvider,
   DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) { }
+  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
 
   public provideDocumentRangeFormattingEdits(
     document: TextDocument,
