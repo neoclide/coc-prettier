@@ -34,7 +34,11 @@ async function resolveConfig(
   options?: {editorconfig?: boolean}
 ): Promise<ResolveConfigResult> {
   try {
-    const config = await bundledPrettier.resolveConfig(filePath, options)
+    const localPrettier = await requireLocalPkg(path.dirname(filePath), 'prettier') as Prettier
+
+    const prettierInstance = localPrettier || bundledPrettier
+
+    const config = await prettierInstance.resolveConfig(filePath, options)
     return {config}
   } catch (error) {
     return {config: null, error}
@@ -203,28 +207,6 @@ export async function format(
           `prettier@${
           localPrettier.version
           } doesn't support ${languageId}. ` +
-          `Falling back to bundled prettier@${
-          bundledPrettier.version
-          }.`
-
-        addToOutput(warningMessage, 'Warning')
-
-        // setUsedModule('prettier', bundledPrettier.version, true)
-
-        return bundledPrettier.format(text, prettierOptions)
-      },
-      text,
-      fileName
-    )
-  }
-
-  if (semver.gt(bundledPrettier.version, localPrettier.version)) {
-    return safeExecution(
-      () => {
-        const warningMessage =
-          `prettier@${
-          localPrettier.version
-          } version lower than bundled prettier, ` +
           `Falling back to bundled prettier@${
           bundledPrettier.version
           }.`
