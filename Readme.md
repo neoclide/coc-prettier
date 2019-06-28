@@ -161,6 +161,10 @@ _Note: Disabling a language enabled in a parent folder will prevent formatting i
 
 Text of status item indicating current buffer can't be formatted by prettier.
 
+#### prettier.onlyUseLocalVersion (default: false)
+
+Only use the version of prettier installed by the client, ignoring the version bundled with coc-prettier
+
 ## Prettier resolution
 
 This extension will use prettier from your project's local dependencies. Should prettier not be installed locally with your project's dependencies, a copy will be bundled with the extension.

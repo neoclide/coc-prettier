@@ -87,6 +87,10 @@ interface ExtensionConfig {
    * Array of language IDs to ignore
    */
   disableLanguages: string[]
+  /**
+   * Only use the version of prettier installed by the client, ignoring the version bundled with coc-prettier
+   */
+  onlyUseLocalVersion: boolean
 }
 
 /**
