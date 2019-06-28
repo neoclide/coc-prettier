@@ -1,10 +1,11 @@
-import { ExtensionContext, events, workspace, languages, commands } from 'coc.nvim'
+import { ExtensionContext, events, workspace, languages, commands, Uri } from 'coc.nvim'
 import { Disposable, DocumentSelector, TextEdit } from 'vscode-languageserver-protocol'
 import configFileListener from './configCacheHandler'
 import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
 import EditProvider, { format, fullDocumentRange } from './PrettierEditProvider'
-import { allLanguages, rangeLanguages, enabledLanguages } from './utils'
+import { allLanguages, rangeLanguages, enabledLanguages, getConfig, hasLocalPrettierInstalled } from './utils'
+import { PrettierVSCodeConfig } from './types';
 
 interface Selectors {
   rangeLanguageSelector: DocumentSelector
@@ -53,15 +54,18 @@ function wait(ms: number): Promise<any> {
   })
 }
 
-export function activate(context: ExtensionContext): void {
+export async function activate(context: ExtensionContext): Promise<void> {
   const { fileIsIgnored } = ignoreFileHandler(context.subscriptions)
   const editProvider = new EditProvider(fileIsIgnored)
   const statusItem = workspace.createStatusBarItem(0)
   const config = workspace.getConfiguration('prettier')
   statusItem.text = config.get<string>('statusItemText', 'Prettier')
   let priority = config.get<number>('formatterPriority', 1)
+  let document = await workspace.document
+  const parsedUri = Uri.parse(document.textDocument.uri)
+  const vscodeConfig: PrettierVSCodeConfig = getConfig(parsedUri)
 
-  async function checkDocuemnt(): Promise<void> {
+  async function checkDocument(): Promise<void> {
     await wait(30)
     let doc = workspace.getDocument(workspace.bufnr)
     let languageIds = enabledLanguages()
@@ -75,6 +79,11 @@ export function activate(context: ExtensionContext): void {
   function registerFormatter(): void {
     disposeHandlers()
     const { languageSelector, rangeLanguageSelector } = selectors()
+    
+    if(vscodeConfig.onlyUseLocalVersion && !hasLocalPrettierInstalled(parsedUri.fsPath)) {
+      workspace.showMessage(`Flag prettier.onlyUseLocalVersion is set, but prettier is not installed locally. No operation will be made.`, 'warning') 
+      return
+    }
 
     rangeFormatterHandler = languages.registerDocumentRangeFormatProvider(
       rangeLanguageSelector,
@@ -89,12 +98,12 @@ export function activate(context: ExtensionContext): void {
     )
   }
   registerFormatter()
-  checkDocuemnt().catch(_e => {
+  checkDocument().catch(_e => {
     // noop
   })
 
   events.on('BufEnter', async () => {
-    await checkDocuemnt()
+    await checkDocument()
   }, null, context.subscriptions)
 
   context.subscriptions.push(
@@ -103,11 +112,14 @@ export function activate(context: ExtensionContext): void {
   )
   context.subscriptions.push(
     commands.registerCommand('prettier.formatFile', async () => {
-      let document = await workspace.document
       let languageId = document.filetype
       let languages = allLanguages()
       if (languages.indexOf(languageId) == -1) {
         workspace.showMessage(`${document.filetype} not supported by prettier`, 'error')
+        return
+      }
+      if(vscodeConfig.onlyUseLocalVersion && !hasLocalPrettierInstalled(parsedUri.fsPath)) {
+        workspace.showMessage(`Flag prettier.onlyUseLocalVersion is set, but prettier is not installed locally. No operation will be made.`, 'warning') 
         return
       }
       let edits = await format(document.content, document.textDocument, {}).then(code => [

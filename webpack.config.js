@@ -13,7 +13,10 @@ module.exports = {
     'prettier': 'commonjs prettier',
     'prettier-eslint': 'commonjs prettier-eslint',
     'prettier-stylelint': 'commonjs prettier-stylelint',
-    'prettier-tslint': 'commonjs prettier-tslint'
+    'prettier-tslint': 'commonjs prettier-tslint',
+    'spdx-license-ids/deprecated': 'commonjs spdx-license-ids/deprecated',
+    'spdx-license-ids': 'commonjs spdx-license-ids',
+    'spdx-exceptions': 'commonjs spdx-exceptions'
   },
   module: {
     rules: [{
