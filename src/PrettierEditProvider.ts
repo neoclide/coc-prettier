@@ -1,28 +1,17 @@
-import {Uri, workspace} from 'coc.nvim'
-import {DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider} from 'coc.nvim/lib/provider'
+import { Uri, workspace, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider } from 'coc.nvim'
 import path from 'path'
-import {CancellationToken, FormattingOptions, Range, TextDocument, TextEdit} from 'vscode-languageserver-protocol'
-import {addToOutput, safeExecution} from './errorHandler'
-import {requireLocalPkg} from './requirePkg'
-import {ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig} from './types.d'
-import {getConfig, getParsersFromLanguageId} from './utils'
-import semver from 'semver'
+import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } from 'vscode-languageserver-protocol'
+import { addToOutput, safeExecution } from './errorHandler'
+import { requireLocalPkg } from './requirePkg'
+import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
+import { getConfig, getParsersFromLanguageId } from './utils'
 
-const bundledPrettier = require('prettier') as Prettier
 /**
  * HOLD style parsers (for stylelint integration)
  */
 const STYLE_PARSERS: ParserOption[] = ['postcss', 'css', 'less', 'scss']
-/**
- * Check if a given file has an associated prettierconfig.
- * @param filePath file's path
- */
-async function hasPrettierConfig(filePath: string): Promise<boolean> {
-  const {config} = await resolveConfig(filePath)
-  return config !== null
-}
 
-interface ResolveConfigResult {config: PrettierConfig | null; error?: Error}
+interface ResolveConfigResult { config: PrettierConfig | null; error?: Error }
 
 /**
  * Resolves the prettierconfig for the given file.
@@ -31,17 +20,18 @@ interface ResolveConfigResult {config: PrettierConfig | null; error?: Error}
  */
 async function resolveConfig(
   filePath: string,
-  options?: {editorconfig?: boolean}
+  options: { editorconfig?: boolean, onlyUseLocalVersion: boolean }
 ): Promise<ResolveConfigResult> {
   try {
-    const localPrettier = await requireLocalPkg(path.dirname(filePath), 'prettier') as Prettier
-
-    const prettierInstance = localPrettier || bundledPrettier
-
+    const localPrettier = await requireLocalPkg(path.dirname(filePath), 'prettier', { silent: true, ignoreBundled: true }) as Prettier
+    let prettierInstance = localPrettier
+    if (!prettierInstance && !options.onlyUseLocalVersion) {
+      prettierInstance = require('prettier')
+    }
     const config = await prettierInstance.resolveConfig(filePath, options)
-    return {config}
+    return { config }
   } catch (error) {
-    return {config: null, error}
+    return { config: null, error }
   }
 }
 
@@ -66,7 +56,7 @@ function mergeConfig(
 ): any {
   return hasPrettierConfig
     ? Object.assign(
-      {parser: vscodeConfig.parser}, // always merge our inferred parser in
+      { parser: vscodeConfig.parser }, // always merge our inferred parser in
       prettierConfig,
       additionalConfig
     )
@@ -80,18 +70,23 @@ function mergeConfig(
  */
 export async function format(
   text: string,
-  {languageId, uri}: TextDocument,
+  { languageId, uri }: TextDocument,
   customOptions: Partial<PrettierConfig>
 ): Promise<string> {
   let u = Uri.parse(uri)
   const isUntitled = u.scheme == 'untitled'
   const fileName = u.fsPath
   const vscodeConfig: PrettierVSCodeConfig = getConfig(u)
-  const localPrettier = await requireLocalPkg(path.dirname(fileName), 'prettier') as Prettier
+
+  const localOnly = vscodeConfig.onlyUseLocalVersion
+  const resolvedPrettier = await requireLocalPkg(path.dirname(fileName), 'prettier', { silent: true, ignoreBundled: localOnly }) as Prettier
+  if (!resolvedPrettier) {
+    addToOutput(`Prettier module not found, prettier.onlyUseLocalVersion: ${vscodeConfig.onlyUseLocalVersion}`, 'Error')
+  }
 
   const dynamicParsers = getParsersFromLanguageId(
     languageId,
-    localPrettier,
+    resolvedPrettier,
     isUntitled ? undefined : fileName
   )
   let useBundled = false
@@ -100,7 +95,7 @@ export async function format(
   if (!dynamicParsers.length) {
     const bundledParsers = getParsersFromLanguageId(
       languageId,
-      bundledPrettier,
+      require('prettier'),
       isUntitled ? undefined : fileName
     )
     parser = bundledParsers[0] || 'babylon'
@@ -119,15 +114,14 @@ export async function format(
     'vue',
   ].includes(languageId)
 
-  const hasConfig = await hasPrettierConfig(fileName)
-
+  const { config: fileOptions, error } = await resolveConfig(fileName, {
+    editorconfig: true,
+    onlyUseLocalVersion: localOnly
+  })
+  const hasConfig = fileOptions != null
   if (!hasConfig && vscodeConfig.requireConfig) {
     return text
   }
-
-  const {config: fileOptions, error} = await resolveConfig(fileName, {
-    editorconfig: true,
-  })
 
   if (error) {
     addToOutput(`Failed to resolve config for ${fileName}. Falling back to the default config settings.`, 'Error')
@@ -155,7 +149,7 @@ export async function format(
   if (vscodeConfig.tslintIntegration && parser === 'typescript') {
     return safeExecution(
       () => {
-        const prettierTslint = require('prettier-tslint')
+        const prettierTslint = requireLocalPkg(u.fsPath, 'prettier-tslint')
           .format as PrettierTslintFormat
         // setUsedModule('prettier-tslint', 'Unknown', true)
 
@@ -173,7 +167,7 @@ export async function format(
   if (vscodeConfig.eslintIntegration && doesParserSupportEslint) {
     return safeExecution(
       () => {
-        const prettierEslint = require('prettier-eslint') as PrettierEslintFormat
+        const prettierEslint = requireLocalPkg(u.fsPath, 'prettier-eslint') as PrettierEslintFormat
         // setUsedModule('prettier-eslint', 'Unknown', true)
 
         return prettierEslint({
@@ -188,7 +182,7 @@ export async function format(
   }
 
   if (vscodeConfig.stylelintIntegration && STYLE_PARSERS.includes(parser)) {
-    const prettierStylelint = require('prettier-stylelint') as PrettierStylelint
+    const prettierStylelint = requireLocalPkg(u.fsPath, 'prettier-stylelint') as PrettierStylelint
     return safeExecution(
       prettierStylelint.format({
         text,
@@ -201,11 +195,12 @@ export async function format(
   }
 
   if (!doesParserSupportEslint && useBundled) {
+    let bundledPrettier = require('prettier')
     return safeExecution(
       () => {
         const warningMessage =
           `prettier@${
-          localPrettier.version
+          bundledPrettier.version
           } doesn't support ${languageId}. ` +
           `Falling back to bundled prettier@${
           bundledPrettier.version
@@ -223,9 +218,8 @@ export async function format(
   }
 
   // setUsedModule('prettier', localPrettier.version, false)
-
   return safeExecution(
-    () => localPrettier.format(text, prettierOptions),
+    () => resolvedPrettier.format(text, prettierOptions),
     text,
     fileName
   )
@@ -236,8 +230,8 @@ export function fullDocumentRange(document: TextDocument): Range {
   let doc = workspace.getDocument(document.uri)
 
   return Range.create(
-    {character: 0, line: 0},
-    {character: doc.getline(lastLineId).length, line: lastLineId}
+    { character: 0, line: 0 },
+    { character: doc.getline(lastLineId).length, line: lastLineId }
   )
 }
 
@@ -245,7 +239,7 @@ class PrettierEditProvider
   implements
   DocumentRangeFormattingEditProvider,
   DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
+  constructor(private _fileIsIgnored: (filePath: string) => boolean) { }
 
   public provideDocumentRangeFormattingEdits(
     document: TextDocument,

@@ -5,7 +5,7 @@ import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
 import EditProvider, { format, fullDocumentRange } from './PrettierEditProvider'
 import { allLanguages, rangeLanguages, enabledLanguages, getConfig, hasLocalPrettierInstalled } from './utils'
-import { PrettierVSCodeConfig } from './types';
+import { PrettierVSCodeConfig } from './types'
 
 interface Selectors {
   rangeLanguageSelector: DocumentSelector
@@ -62,8 +62,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   statusItem.text = config.get<string>('statusItemText', 'Prettier')
   let priority = config.get<number>('formatterPriority', 1)
   let document = await workspace.document
-  const parsedUri = Uri.parse(document.textDocument.uri)
-  const vscodeConfig: PrettierVSCodeConfig = getConfig(parsedUri)
 
   async function checkDocument(): Promise<void> {
     await wait(30)
@@ -79,11 +77,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   function registerFormatter(): void {
     disposeHandlers()
     const { languageSelector, rangeLanguageSelector } = selectors()
-    
-    if(vscodeConfig.onlyUseLocalVersion && !hasLocalPrettierInstalled(parsedUri.fsPath)) {
-      workspace.showMessage(`Flag prettier.onlyUseLocalVersion is set, but prettier is not installed locally. No operation will be made.`, 'warning') 
-      return
-    }
 
     rangeFormatterHandler = languages.registerDocumentRangeFormatProvider(
       rangeLanguageSelector,
@@ -118,8 +111,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
         workspace.showMessage(`${document.filetype} not supported by prettier`, 'error')
         return
       }
-      if(vscodeConfig.onlyUseLocalVersion && !hasLocalPrettierInstalled(parsedUri.fsPath)) {
-        workspace.showMessage(`Flag prettier.onlyUseLocalVersion is set, but prettier is not installed locally. No operation will be made.`, 'warning') 
+      let prettierConfig = workspace.getConfiguration('prettier', document.uri)
+      let onlyUseLocalVersion = prettierConfig.get<boolean>('onlyUseLocalVersion', false)
+      if (onlyUseLocalVersion && (!hasLocalPrettierInstalled(Uri.parse(document.uri).fsPath) || document.schema != 'file')) {
+        workspace.showMessage(`Flag prettier.onlyUseLocalVersion is set, but prettier is not installed locally. No operation will be made.`, 'warning')
         return
       }
       let edits = await format(document.content, document.textDocument, {}).then(code => [

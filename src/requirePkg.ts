@@ -20,7 +20,7 @@ interface Options {
 function requireLocalPkg(
   fspath: string,
   pkgName: string,
-  options: Options = { silent: false, ignoreBundled: false }
+  options: Options = { silent: true, ignoreBundled: false }
 ): any {
   let modulePath = resolveFrom.silent(fspath, pkgName)
 
@@ -28,7 +28,7 @@ function requireLocalPkg(
     try {
       return requireFunc(modulePath)
     } catch (e) {
-      if(!options.silent) {
+      if (!options.silent) {
         addToOutput(`Failed to load ${pkgName} from ${modulePath}.${options.ignoreBundled ? `` : ` Using bundled`}`, 'Error')
       }
     }

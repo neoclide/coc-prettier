@@ -1,5 +1,5 @@
-import {commands, OutputChannel, workspace} from 'coc.nvim'
-import {Disposable} from 'vscode-languageserver-protocol'
+import { commands, OutputChannel, workspace } from 'coc.nvim'
+import { Disposable } from 'vscode-languageserver-protocol'
 
 let outputChannel: OutputChannel
 /**

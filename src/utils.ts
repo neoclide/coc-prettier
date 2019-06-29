@@ -1,13 +1,12 @@
 import { workspace, Uri } from 'coc.nvim'
 import { basename } from 'path'
-import readPkgUp from 'read-pkg-up'
 import {
   PrettierVSCodeConfig,
   Prettier,
   PrettierSupportInfo,
   ParserOption,
 } from './types.d'
-import { requireLocalPkg } from './requirePkg';
+import { requireLocalPkg } from './requirePkg'
 
 const bundledPrettier = require('prettier') as Prettier
 
@@ -72,25 +71,6 @@ function getSupportLanguages(prettierInstance: Prettier = bundledPrettier): any 
 }
 
 export function hasLocalPrettierInstalled(filePath: string): boolean {
-  const pkgResult = readPkgUp.sync({ cwd: filePath })
-
-  if(!pkgResult || !pkgResult.package) {
-    return false
-  }
-  
-  const { dependencies = {}, devDependencies = {} } = pkgResult.package
-
-  const hasPrettierOnPkgJson = devDependencies.prettier || dependencies.prettier
-
-  if(!hasPrettierOnPkgJson) {
-    return false
-  }
-
   const localPrettier = requireLocalPkg(filePath, 'prettier', { silent: true, ignoreBundled: true })
-
-  if(!localPrettier) {
-    return false
-  }
-
-  return true
+  return localPrettier != null
 }
