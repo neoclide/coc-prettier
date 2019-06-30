@@ -61,7 +61,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const config = workspace.getConfiguration('prettier')
   statusItem.text = config.get<string>('statusItemText', 'Prettier')
   let priority = config.get<number>('formatterPriority', 1)
-  let document = await workspace.document
 
   async function checkDocument(): Promise<void> {
     await wait(30)
@@ -105,6 +104,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   )
   context.subscriptions.push(
     commands.registerCommand('prettier.formatFile', async () => {
+      let document = await workspace.document
       let languageId = document.filetype
       let languages = allLanguages()
       if (languages.indexOf(languageId) == -1) {
