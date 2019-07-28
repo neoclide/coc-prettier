@@ -262,7 +262,7 @@ class PrettierEditProvider
     return this._provideEdits(document, {})
   }
 
-  private _provideEdits(
+  private async _provideEdits(
     document: TextDocument,
     options: Partial<PrettierConfig>
   ): Promise<TextEdit[]> {
@@ -270,16 +270,19 @@ class PrettierEditProvider
     if (!document.uri.startsWith('untitled') && this._fileIsIgnored(fileName)) {
       return Promise.resolve([])
     }
-    return format(document.getText(), document, options).then(code => [
-      TextEdit.replace(fullDocumentRange(document), code),
-    ]).then(edits => {
-      if (edits && edits.length) {
-        workspace.showMessage('Formatted by prettier')
-      }
-      addToOutput(`Formatted file: ${document.uri}`)
-      addToOutput(`Prettier format edits: ${JSON.stringify(edits, null, 2)}`)
-      return edits
-    })
+
+    const code = await format(document.getText(), document, options)
+    const edits = [await TextEdit.replace(fullDocumentRange(document), code)]
+    const {disableSuccessMessage} = getConfig()
+
+    if (edits && edits.length && !disableSuccessMessage) {
+      workspace.showMessage('Formatted by prettier')
+    }
+
+    addToOutput(`Formatted file: ${document.uri}`)
+    addToOutput(`Prettier format edits: ${JSON.stringify(edits, null, 2)}`)
+
+    return edits
   }
 }
 

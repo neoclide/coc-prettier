@@ -165,6 +165,10 @@ Text of status item indicating current buffer can't be formatted by prettier.
 
 Only use the version of prettier installed by the client, ignoring the version bundled with coc-prettier
 
+#### prettier.disableSuccessMessage (default: false)
+
+Disable the 'Formatted by prettier' message which is echoed every time a file is successfully formatted
+
 ## Prettier resolution
 
 This extension will use prettier from your project's local dependencies. Should prettier not be installed locally with your project's dependencies, a copy will be bundled with the extension.
