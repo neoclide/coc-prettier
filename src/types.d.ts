@@ -90,7 +90,11 @@ interface ExtensionConfig {
   /**
    * Only use the version of prettier installed by the client, ignoring the version bundled with coc-prettier
    */
-  onlyUseLocalVersion: boolean
+  onlyUseLocalVersion: boolean,
+  /**
+   * Disable the 'Formatted by prettier' message which is echoed every time a file is successfully formatted
+   */
+  disableSuccessMessage: boolean
 }
 
 /**

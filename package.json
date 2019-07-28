@@ -70,6 +70,12 @@
           "description": "Only use the version of prettier installed by the client, ignoring the version bundled with coc-prettier",
           "scope": "resource"
         },
+        "prettier.disableSuccessMessage": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable the 'Formatted by prettier' message which is echoed every time a file is successfully formatted",
+          "scope": "resource"
+        },
         "prettier.statusItemText": {
           "type": "string",
           "default": "Prettier",
