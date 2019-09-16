@@ -37,7 +37,7 @@ export function getParsersFromLanguageId(
 
 export function allLanguages(): string[] {
   return getSupportLanguages().reduce(
-    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['javascriptreact', 'typescriptreact']],
+    (ids, language) => [...ids, ...(language.vscodeLanguageIds || [])],
     [] as string[]
   )
 }
@@ -45,7 +45,7 @@ export function allLanguages(): string[] {
 export function enabledLanguages(): string[] {
   const { disableLanguages } = getConfig()
   return getSupportLanguages().reduce(
-    (ids, language) => [...ids, ...(language.vscodeLanguageIds || []), ...['javascriptreact', 'typescriptreact']],
+    (ids, language) => [...ids, ...(language.vscodeLanguageIds || [])],
     [] as string[]
   ).filter(x => disableLanguages.indexOf(x) == -1)
 }
