@@ -116,6 +116,9 @@ export interface Prettier {
       editorconfig?: boolean
     }
   ) => Promise<PrettierConfig>
+  resolveConfigFile: (
+    filePath: string,
+  ) => Promise<string>
   clearConfigCache: () => void
   getSupportInfo(version?: string): PrettierSupportInfo
   readonly version: string

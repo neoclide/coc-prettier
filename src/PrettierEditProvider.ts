@@ -20,13 +20,17 @@ interface ResolveConfigResult { config: PrettierConfig | null; error?: Error }
  */
 async function resolveConfig(
   filePath: string,
-  options: { editorconfig?: boolean, onlyUseLocalVersion: boolean }
+  options: { editorconfig?: boolean, onlyUseLocalVersion: boolean, requireConfig: boolean }
 ): Promise<ResolveConfigResult> {
   try {
     const localPrettier = await requireLocalPkg(path.dirname(filePath), 'prettier', { silent: true, ignoreBundled: true }) as Prettier
     let prettierInstance = localPrettier
     if (!prettierInstance && !options.onlyUseLocalVersion) {
       prettierInstance = require('prettier')
+    }
+    const configPath = await prettierInstance.resolveConfigFile(filePath)
+    if (options.requireConfig && !configPath) {
+      return { config: null }
     }
     const config = await prettierInstance.resolveConfig(filePath, options)
     return { config }
@@ -116,7 +120,8 @@ export async function format(
 
   const { config: fileOptions, error } = await resolveConfig(fileName, {
     editorconfig: true,
-    onlyUseLocalVersion: localOnly
+    onlyUseLocalVersion: localOnly,
+    requireConfig: vscodeConfig.requireConfig
   })
   const hasConfig = fileOptions != null
   if (!hasConfig && vscodeConfig.requireConfig) {
@@ -135,7 +140,7 @@ export async function format(
       printWidth: vscodeConfig.printWidth,
       tabWidth: vscodeConfig.tabWidth,
       singleQuote: vscodeConfig.singleQuote,
-      jsxSingleQuote: vscodeConfig.jsxSingleQuote,      
+      jsxSingleQuote: vscodeConfig.jsxSingleQuote,
       trailingComma: vscodeConfig.trailingComma,
       bracketSpacing: vscodeConfig.bracketSpacing,
       jsxBracketSameLine: vscodeConfig.jsxBracketSameLine,
