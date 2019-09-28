@@ -4,7 +4,7 @@ import configFileListener from './configCacheHandler'
 import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
 import EditProvider, { format, fullDocumentRange } from './PrettierEditProvider'
-import { allLanguages, rangeLanguages, enabledLanguages, getConfig, hasLocalPrettierInstalled } from './utils'
+import { rangeLanguages, enabledLanguages, getConfig, hasLocalPrettierInstalled } from './utils'
 import { PrettierVSCodeConfig } from './types'
 
 interface Selectors {
@@ -105,12 +105,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(
     commands.registerCommand('prettier.formatFile', async () => {
       let document = await workspace.document
-      let languageId = document.filetype
-      let languages = allLanguages()
-      if (languages.indexOf(languageId) == -1) {
-        workspace.showMessage(`${document.filetype} not supported by prettier`, 'error')
-        return
-      }
       let prettierConfig = workspace.getConfiguration('prettier', document.uri)
       let onlyUseLocalVersion = prettierConfig.get<boolean>('onlyUseLocalVersion', false)
       if (onlyUseLocalVersion && (!hasLocalPrettierInstalled(Uri.parse(document.uri).fsPath) || document.schema != 'file')) {

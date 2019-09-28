@@ -4,7 +4,7 @@ import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } f
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
 import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
-import { getConfig, getParsersFromLanguageId } from './utils'
+import { allLanguages, getConfig, getParsersFromLanguageId } from './utils'
 
 /**
  * HOLD style parsers (for stylelint integration)
@@ -86,6 +86,12 @@ export async function format(
   const resolvedPrettier = await requireLocalPkg(path.dirname(fileName), 'prettier', { silent: true, ignoreBundled: localOnly }) as Prettier
   if (!resolvedPrettier) {
     addToOutput(`Prettier module not found, prettier.onlyUseLocalVersion: ${vscodeConfig.onlyUseLocalVersion}`, 'Error')
+  }
+
+  let supportedLanguages = allLanguages(resolvedPrettier)
+  if (supportedLanguages.indexOf(languageId) == -1) {
+    workspace.showMessage(`${languageId} not supported by prettier`, 'error')
+    return
   }
 
   const dynamicParsers = getParsersFromLanguageId(

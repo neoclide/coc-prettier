@@ -35,8 +35,8 @@ export function getParsersFromLanguageId(
   return language.parsers
 }
 
-export function allLanguages(): string[] {
-  return getSupportLanguages().reduce(
+export function allLanguages(prettierInstance: Prettier): string[] {
+  return getSupportLanguages(prettierInstance).reduce(
     (ids, language) => [...ids, ...(language.vscodeLanguageIds || [])],
     [] as string[]
   )
