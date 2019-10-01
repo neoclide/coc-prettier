@@ -1,17 +1,44 @@
-import { Uri, workspace, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider } from 'coc.nvim'
+import {
+  Uri,
+  workspace,
+  DocumentFormattingEditProvider,
+  DocumentRangeFormattingEditProvider,
+} from 'coc.nvim'
 import path from 'path'
-import { CancellationToken, FormattingOptions, Range, TextDocument, TextEdit } from 'vscode-languageserver-protocol'
+import {
+  CancellationToken,
+  FormattingOptions,
+  Range,
+  TextDocument,
+  TextEdit,
+} from 'vscode-languageserver-protocol'
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
-import { ParserOption, Prettier, PrettierConfig, PrettierEslintFormat, PrettierStylelint, PrettierTslintFormat, PrettierVSCodeConfig } from './types.d'
-import { getConfig, getParsersFromLanguageId } from './utils'
+import {
+  ParserOption,
+  Prettier,
+  PrettierConfig,
+  PrettierEslintFormat,
+  PrettierStylelint,
+  PrettierTslintFormat,
+  PrettierVSCodeConfig,
+} from './types.d'
+import {
+  allLanguages,
+  getConfig,
+  getParsersFromLanguageId,
+  getPrettierInstance,
+} from './utils'
 
 /**
  * HOLD style parsers (for stylelint integration)
  */
 const STYLE_PARSERS: ParserOption[] = ['postcss', 'css', 'less', 'scss']
 
-interface ResolveConfigResult { config: PrettierConfig | null; error?: Error }
+interface ResolveConfigResult {
+  config: PrettierConfig | null
+  error?: Error
+}
 
 /**
  * Resolves the prettierconfig for the given file.
@@ -20,10 +47,18 @@ interface ResolveConfigResult { config: PrettierConfig | null; error?: Error }
  */
 async function resolveConfig(
   filePath: string,
-  options: { editorconfig?: boolean, onlyUseLocalVersion: boolean, requireConfig: boolean }
+  options: {
+    editorconfig?: boolean
+    onlyUseLocalVersion: boolean
+    requireConfig: boolean
+  }
 ): Promise<ResolveConfigResult> {
   try {
-    const localPrettier = await requireLocalPkg(path.dirname(filePath), 'prettier', { silent: true, ignoreBundled: true }) as Prettier
+    const localPrettier = (await requireLocalPkg(
+      path.dirname(filePath),
+      'prettier',
+      { silent: true, ignoreBundled: true }
+    )) as Prettier
     let prettierInstance = localPrettier
     if (!prettierInstance && !options.onlyUseLocalVersion) {
       prettierInstance = require('prettier')
@@ -60,10 +95,10 @@ function mergeConfig(
 ): any {
   return hasPrettierConfig
     ? Object.assign(
-      { parser: vscodeConfig.parser }, // always merge our inferred parser in
-      prettierConfig,
-      additionalConfig
-    )
+        { parser: vscodeConfig.parser }, // always merge our inferred parser in
+        prettierConfig,
+        additionalConfig
+      )
     : Object.assign(vscodeConfig, prettierConfig, additionalConfig)
 }
 /**
@@ -83,9 +118,18 @@ export async function format(
   const vscodeConfig: PrettierVSCodeConfig = getConfig(u)
 
   const localOnly = vscodeConfig.onlyUseLocalVersion
-  const resolvedPrettier = await requireLocalPkg(path.dirname(fileName), 'prettier', { silent: true, ignoreBundled: localOnly }) as Prettier
+  const resolvedPrettier = await getPrettierInstance()
   if (!resolvedPrettier) {
-    addToOutput(`Prettier module not found, prettier.onlyUseLocalVersion: ${vscodeConfig.onlyUseLocalVersion}`, 'Error')
+    addToOutput(
+      `Prettier module not found, prettier.onlyUseLocalVersion: ${vscodeConfig.onlyUseLocalVersion}`,
+      'Error'
+    )
+  }
+
+  let supportedLanguages = allLanguages(resolvedPrettier)
+  if (supportedLanguages.indexOf(languageId) == -1) {
+    workspace.showMessage(`${languageId} not supported by prettier`, 'error')
+    return
   }
 
   const dynamicParsers = getParsersFromLanguageId(
@@ -121,7 +165,7 @@ export async function format(
   const { config: fileOptions, error } = await resolveConfig(fileName, {
     editorconfig: true,
     onlyUseLocalVersion: localOnly,
-    requireConfig: vscodeConfig.requireConfig
+    requireConfig: vscodeConfig.requireConfig,
   })
   const hasConfig = fileOptions != null
   if (!hasConfig && vscodeConfig.requireConfig) {
@@ -129,7 +173,10 @@ export async function format(
   }
 
   if (error) {
-    addToOutput(`Failed to resolve config for ${fileName}. Falling back to the default config settings.`, 'Error')
+    addToOutput(
+      `Failed to resolve config for ${fileName}. Falling back to the default config settings.`,
+      'Error'
+    )
   }
 
   const prettierOptions = mergeConfig(
@@ -173,7 +220,10 @@ export async function format(
   if (vscodeConfig.eslintIntegration && doesParserSupportEslint) {
     return safeExecution(
       () => {
-        const prettierEslint = requireLocalPkg(u.fsPath, 'prettier-eslint') as PrettierEslintFormat
+        const prettierEslint = requireLocalPkg(
+          u.fsPath,
+          'prettier-eslint'
+        ) as PrettierEslintFormat
         // setUsedModule('prettier-eslint', 'Unknown', true)
 
         return prettierEslint({
@@ -188,7 +238,10 @@ export async function format(
   }
 
   if (vscodeConfig.stylelintIntegration && STYLE_PARSERS.includes(parser)) {
-    const prettierStylelint = requireLocalPkg(u.fsPath, 'prettier-stylelint') as PrettierStylelint
+    const prettierStylelint = requireLocalPkg(
+      u.fsPath,
+      'prettier-stylelint'
+    ) as PrettierStylelint
     return safeExecution(
       prettierStylelint.format({
         text,
@@ -205,12 +258,8 @@ export async function format(
     return safeExecution(
       () => {
         const warningMessage =
-          `prettier@${
-          bundledPrettier.version
-          } doesn't support ${languageId}. ` +
-          `Falling back to bundled prettier@${
-          bundledPrettier.version
-          }.`
+          `prettier@${bundledPrettier.version} doesn't support ${languageId}. ` +
+          `Falling back to bundled prettier@${bundledPrettier.version}.`
 
         addToOutput(warningMessage, 'Warning')
 
@@ -243,9 +292,9 @@ export function fullDocumentRange(document: TextDocument): Range {
 
 class PrettierEditProvider
   implements
-  DocumentRangeFormattingEditProvider,
-  DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) { }
+    DocumentRangeFormattingEditProvider,
+    DocumentFormattingEditProvider {
+  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
 
   public provideDocumentRangeFormattingEdits(
     document: TextDocument,
@@ -278,7 +327,7 @@ class PrettierEditProvider
 
     const code = await format(document.getText(), document, options)
     const edits = [await TextEdit.replace(fullDocumentRange(document), code)]
-    const {disableSuccessMessage} = getConfig()
+    const { disableSuccessMessage } = getConfig()
 
     if (edits && edits.length && !disableSuccessMessage) {
       workspace.showMessage('Formatted by prettier')
