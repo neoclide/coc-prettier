@@ -63,10 +63,6 @@ async function resolveConfig(
     if (!prettierInstance && !options.onlyUseLocalVersion) {
       prettierInstance = require('prettier')
     }
-    const configPath = await prettierInstance.resolveConfigFile(filePath)
-    if (options.requireConfig && !configPath) {
-      return { config: null }
-    }
     const config = await prettierInstance.resolveConfig(filePath, options)
     return { config }
   } catch (error) {
