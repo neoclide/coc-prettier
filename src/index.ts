@@ -80,6 +80,7 @@ function wait(ms: number): Promise<any> {
 }
 
 export async function activate(context: ExtensionContext): Promise<void> {
+  context.subscriptions.push(setupErrorHandler())
   const { fileIsIgnored } = ignoreFileHandler(context.subscriptions)
   const editProvider = new EditProvider(fileIsIgnored)
   const statusItem = workspace.createStatusBarItem(0)
@@ -87,6 +88,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   statusItem.text = config.get<string>('statusItemText', 'Prettier')
   let priority = config.get<number>('formatterPriority', 1)
   const prettierInstance = await getPrettierInstance()
+  if (!prettierInstance) return
 
   async function checkDocument(): Promise<void> {
     await wait(30)
@@ -131,7 +133,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions
   )
 
-  context.subscriptions.push(setupErrorHandler(), configFileListener())
+  context.subscriptions.push(configFileListener())
   context.subscriptions.push(
     commands.registerCommand('prettier.formatFile', async () => {
       let document = await workspace.document

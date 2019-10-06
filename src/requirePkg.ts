@@ -29,7 +29,7 @@ function requireLocalPkg(
       return requireFunc(modulePath)
     } catch (e) {
       if (!options.silent) {
-        addToOutput(`Failed to load ${pkgName} from ${modulePath}.${options.ignoreBundled ? `` : ` Using bundled`}`, 'Error')
+        addToOutput(`Failed to load require ${pkgName} from ${modulePath}.${options.ignoreBundled ? `` : ` Using bundled`}`, 'Error')
       }
     }
   }
