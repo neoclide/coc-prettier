@@ -121,7 +121,7 @@ Include parentheses around a sole arrow function parameter
 
 ### Coc specific settings
 
-These settings are specific to Coc and need to be set in the Coc settings file. See the [documentation](https://github.com/neoclide/coc.nvim/wiki/Using-configuration-file) for how to do that.
+These settings are specific to Coc and need to be set in the Coc settings file. See the [documentation](https://github.com/neoclide/coc.nvim/wiki/Using-the-configuration-file) for how to do that.
 
 #### prettier.formatterPriority (default: 1) - priority of fomatter
 
