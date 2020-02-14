@@ -49,19 +49,21 @@ async function resolveConfig(
   filePath: string,
   options: {
     editorconfig?: boolean
+    standardIntegration: boolean
     onlyUseLocalVersion: boolean
     requireConfig: boolean
   }
 ): Promise<ResolveConfigResult> {
+  const pkg = options.standardIntegration ? 'prettier-standard' : 'prettier'
   try {
     const localPrettier = (await requireLocalPkg(
       path.dirname(filePath),
-      'prettier',
+      pkg,
       { silent: true, ignoreBundled: true }
     )) as Prettier
     let prettierInstance = localPrettier
     if (!prettierInstance && !options.onlyUseLocalVersion) {
-      prettierInstance = require('prettier')
+      prettierInstance = require(pkg)
     }
     const config = await prettierInstance.resolveConfig(filePath, options)
     return { config }
@@ -114,6 +116,8 @@ export async function format(
   const vscodeConfig: PrettierVSCodeConfig = getConfig(u)
 
   const localOnly = vscodeConfig.onlyUseLocalVersion
+  const standardIntegration = vscodeConfig.standardIntegration
+  const pkg = standardIntegration ? 'prettier-standard' : 'prettier'
   const resolvedPrettier = await getPrettierInstance()
   if (!resolvedPrettier) {
     addToOutput(
@@ -139,7 +143,7 @@ export async function format(
   if (!dynamicParsers.length) {
     const bundledParsers = getParsersFromLanguageId(
       languageId,
-      require('prettier'),
+      require(pkg),
       isUntitled ? undefined : fileName
     )
     parser = bundledParsers[0] || 'babylon'
@@ -160,6 +164,7 @@ export async function format(
 
   const { config: fileOptions, error } = await resolveConfig(fileName, {
     editorconfig: true,
+    standardIntegration,
     onlyUseLocalVersion: localOnly,
     requireConfig: vscodeConfig.requireConfig,
   })
@@ -250,7 +255,7 @@ export async function format(
   }
 
   if (!doesParserSupportEslint && useBundled) {
-    let bundledPrettier = require('prettier')
+    let bundledPrettier = require(pkg)
     return safeExecution(
       () => {
         const warningMessage =
