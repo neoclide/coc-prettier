@@ -181,7 +181,7 @@ export async function format(
   }
 
   const prettierOptions = mergeConfig(
-    hasConfig,
+    hasConfig || standardIntegration,
     customOptions,
     fileOptions || {},
     {
