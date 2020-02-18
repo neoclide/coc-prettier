@@ -142,9 +142,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
         'onlyUseLocalVersion',
         false
       )
+      let standardIntegration = prettierConfig.get<boolean>(
+        'standardIntegration',
+        false
+      )
       if (
         onlyUseLocalVersion &&
-        (!hasLocalPrettierInstalled(Uri.parse(document.uri).fsPath) ||
+        (!hasLocalPrettierInstalled(Uri.parse(document.uri).fsPath, standardIntegration) ||
           document.schema != 'file')
       ) {
         workspace.showMessage(

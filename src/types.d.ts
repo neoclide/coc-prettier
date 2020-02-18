@@ -61,6 +61,11 @@ export interface PrettierConfig {
  */
 interface ExtensionConfig {
   /**
+   * Use 'prettier-standard' instead of 'prettier'.
+   * Other settings will only be fallbacks in case they could not be inferred from eslint rules.
+   */
+  standardIntegration: boolean
+  /**
    * Use 'prettier-eslint' instead of 'prettier'.
    * Other settings will only be fallbacks in case they could not be inferred from eslint rules.
    */

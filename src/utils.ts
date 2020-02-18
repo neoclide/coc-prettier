@@ -24,9 +24,11 @@ export async function getPrettierInstance(): Promise<Prettier> {
   const vscodeConfig: PrettierVSCodeConfig = getConfig(uri)
 
   const localOnly = vscodeConfig.onlyUseLocalVersion
+  const standardIntegration = vscodeConfig.standardIntegration
+  const pkg = standardIntegration ? 'prettier-standard' : 'prettier'
   const resolvedPrettier = (await requireLocalPkg(
     path.dirname(fileName),
-    'prettier',
+    pkg,
     { silent: true, ignoreBundled: localOnly }
   )) as Prettier
 
@@ -103,8 +105,9 @@ function getSupportLanguages(
   return prettierInstance.getSupportInfo(prettierInstance.version).languages
 }
 
-export function hasLocalPrettierInstalled(filePath: string): boolean {
-  const localPrettier = requireLocalPkg(filePath, 'prettier', {
+export function hasLocalPrettierInstalled(filePath: string, standard: boolean): boolean {
+  const pkg = standard ? 'prettier-standard' : 'prettier'
+  const localPrettier = requireLocalPkg(filePath, pkg, {
     silent: true,
     ignoreBundled: true,
   })

@@ -40,6 +40,12 @@
           "description": "A list of languages IDs to disable this extension on",
           "scope": "window"
         },
+        "prettier.standardIntegration": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use 'prettier-standard' instead of 'prettier'. Other settings will only be fallbacks in case they could not be inferred from eslint rules.",
+          "scope": "resource"
+        },
         "prettier.eslintIntegration": {
           "type": "boolean",
           "default": false,
@@ -237,6 +243,7 @@
   "dependencies": {
     "prettier": "^1.19.1",
     "prettier-eslint": "^9.0.1",
+    "prettier-standard": "^16.1.0",
     "prettier-stylelint": "^0.4.2",
     "prettier-tslint": "^0.4.2"
   }

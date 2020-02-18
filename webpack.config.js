@@ -11,6 +11,7 @@ module.exports = {
   externals: {
     'coc.nvim': 'commonjs coc.nvim',
     'prettier': 'commonjs prettier',
+    'prettier-standard': 'commonjs prettier-standard',
     'prettier-eslint': 'commonjs prettier-eslint',
     'prettier-stylelint': 'commonjs prettier-stylelint',
     'prettier-tslint': 'commonjs prettier-tslint'
