@@ -43,7 +43,7 @@ Open settings file with:
 Add:
 
 ```
-  "coc.preferences.formatOnSaveFiletypes": ["css", "Markdown"],
+  "coc.preferences.formatOnSaveFiletypes": ["css", "markdown"],
 ```
 
 to setup the languages which you want to format on save.
