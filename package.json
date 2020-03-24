@@ -113,7 +113,7 @@
             "es5",
             "all"
           ],
-          "default": "none",
+          "default": "es5",
           "description": "Controls the printing of trailing commas wherever possible.\n Valid options:\n    'none' - No trailing commas\n    'es5' - Trailing commas where valid in ES5 (objects, arrays, etc)\n    'all' - Trailing commas wherever possible (function arguments)",
           "scope": "resource"
         },
@@ -152,16 +152,20 @@
             "crlf",
             "cr"
           ],
-          "default": "auto",
+          "default": "lf",
           "description": "Specify the end of line used by prettier"
         },
         "prettier.parser": {
           "type": "string",
           "enum": [
-            "babylon",
-            "flow"
+            "none",
+            "babel",
+            "babel-flow",
+            "babel-ts",
+            "flow",
+            "typescript"
           ],
-          "default": "babylon",
+          "default": "none",
           "description": "Override the parser. You shouldn't have to change this setting.",
           "scope": "resource"
         },
@@ -193,7 +197,7 @@
             "avoid",
             "always"
           ],
-          "default": "avoid",
+          "default": "always",
           "description": "Include parentheses around a sole arrow function parameter",
           "scope": "resource"
         }
@@ -235,7 +239,7 @@
     "webpack-cli": "^3.3.8"
   },
   "dependencies": {
-    "prettier": "^1.19.1",
+    "prettier": "^2.0.2",
     "prettier-eslint": "^9.0.1",
     "prettier-stylelint": "^0.4.2",
     "prettier-tslint": "^0.4.2"
