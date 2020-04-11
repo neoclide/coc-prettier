@@ -1,3 +1,7 @@
+## [1.1.13]
+
+- Just bumping minor version to accomadate `yarn upgrade` to fix issue reported by `yarn audit`.
+
 ## [1.1.0]
 
 - Prettier [1.16](https://prettier.io/blog/2019/01/20/1.16.0.html)
