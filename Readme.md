@@ -56,6 +56,8 @@ format, which should contains `Formatted by prettier`.
 
 To make prettier do the format, use command `:CocCommand prettier.formatFile`
 
+To save without formatting, use `:noa w`
+
 ## Settings
 
 ### Prettier's Settings
