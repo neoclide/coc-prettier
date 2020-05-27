@@ -5,13 +5,9 @@
     "target": "es2015",
     "module": "commonjs",
     "moduleResolution": "node",
-    "importHelpers": true,
     "lib": ["es2018"],
     "plugins": []
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-  ]
+  "include": ["src"],
+  "exclude": []
 }
