@@ -236,6 +236,7 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
+    "core-js": "^3.6.5",
     "prettier": "^2.0.5",
     "prettier-eslint": "^10.1.1",
     "prettier-stylelint": "^0.4.2",
