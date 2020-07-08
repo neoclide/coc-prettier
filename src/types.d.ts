@@ -13,6 +13,15 @@ export type ParserOption =
 
 type TrailingCommaOption = 'none' | 'es5' | 'all'
 
+type PrettierPlugin = string | object;
+
+interface PrettierSupportInfoOptions {
+  plugins?: PrettierPlugin[]
+  showUnreleased?: boolean
+  showDeprecated?: boolean
+  showInternal?: boolean
+}
+
 interface PrettierSupportInfo {
   languages: {
     name: string
@@ -120,7 +129,7 @@ export interface Prettier {
     filePath: string,
   ) => Promise<string>
   clearConfigCache: () => void
-  getSupportInfo(version?: string): PrettierSupportInfo
+  getSupportInfo(options?: PrettierSupportInfoOptions): PrettierSupportInfo
   readonly version: string
 }
 type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'trace'
