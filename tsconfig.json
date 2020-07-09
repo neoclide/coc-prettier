@@ -5,6 +5,7 @@
     "target": "es2015",
     "module": "commonjs",
     "moduleResolution": "node",
+    "declaration": false,
     "lib": ["es2018"],
     "plugins": []
   },
