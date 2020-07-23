@@ -12,16 +12,16 @@ import {
   TextEdit,
 } from 'vscode-languageserver-protocol'
 import configFileListener from './configCacheHandler'
-import {setupErrorHandler} from './errorHandler'
+import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
-import EditProvider, {format, fullDocumentRange} from './PrettierEditProvider'
+import EditProvider, { format, fullDocumentRange } from './PrettierEditProvider'
 import {
   rangeLanguages,
   enabledLanguages,
   hasLocalPrettierInstalled,
   getPrettierInstance,
 } from './utils'
-import {Prettier} from './types'
+import { Prettier } from './types'
 
 interface Selectors {
   rangeLanguageSelector: DocumentSelector
@@ -52,8 +52,8 @@ function selectors(prettierInstance: Prettier): Selectors {
   let languageSelector = enabledLanguages(prettierInstance).reduce(
     (curr, language) => {
       return curr.concat([
-        {language, scheme: 'file'},
-        {language, scheme: 'untitled'},
+        { language, scheme: 'file' },
+        { language, scheme: 'untitled' },
       ])
     },
     []
@@ -61,8 +61,8 @@ function selectors(prettierInstance: Prettier): Selectors {
 
   let rangeLanguageSelector = rangeLanguages().reduce((curr, language) => {
     return curr.concat([
-      {language, scheme: 'file'},
-      {language, scheme: 'untitled'},
+      { language, scheme: 'file' },
+      { language, scheme: 'untitled' },
     ])
   }, [])
   return {
@@ -81,9 +81,10 @@ function wait(ms: number): Promise<any> {
 
 export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(setupErrorHandler())
-  const {fileIsIgnored} = ignoreFileHandler(context.subscriptions)
+  const { fileIsIgnored } = ignoreFileHandler(context.subscriptions)
   const editProvider = new EditProvider(fileIsIgnored)
   const statusItem = workspace.createStatusBarItem(0)
+  context.subscriptions.push(statusItem)
   const config = workspace.getConfiguration('prettier')
   statusItem.text = config.get<string>('statusItemText', 'Prettier')
   let priority = config.get<number>('formatterPriority', 1)
@@ -103,7 +104,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   function registerFormatter(): void {
     disposeHandlers()
-    const {languageSelector, rangeLanguageSelector} = selectors(
+    const { languageSelector, rangeLanguageSelector } = selectors(
       prettierInstance
     )
 
