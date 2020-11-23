@@ -100,7 +100,9 @@ export function getGroup(
 function getSupportLanguages(
   prettierInstance: Prettier
 ): PrettierSupportInfo['languages'] {
-  return prettierInstance.getSupportInfo().languages
+  return prettierInstance.getSupportInfo({
+    showUnreleased: true
+  }).languages
 }
 
 export function hasLocalPrettierInstalled(filePath: string): boolean {
