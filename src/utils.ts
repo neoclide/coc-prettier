@@ -8,6 +8,7 @@ import {
 } from './types.d'
 import { requireLocalPkg } from './requirePkg'
 import { addToOutput } from './errorHandler'
+import semver from 'semver'
 
 export function getConfig(uri?: Uri): PrettierVSCodeConfig {
   return workspace.getConfiguration(
@@ -100,9 +101,12 @@ export function getGroup(
 function getSupportLanguages(
   prettierInstance: Prettier
 ): PrettierSupportInfo['languages'] {
-  return prettierInstance.getSupportInfo({
-    showUnreleased: true
-  }).languages
+  if (semver.gte(prettierInstance.version, '2.0.0')) {
+    return prettierInstance.getSupportInfo({
+      showUnreleased: true
+    }).languages
+  }
+  return prettierInstance.getSupportInfo().languages
 }
 
 export function hasLocalPrettierInstalled(filePath: string): boolean {
