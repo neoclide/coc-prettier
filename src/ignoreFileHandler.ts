@@ -1,7 +1,6 @@
-import { workspace, Uri } from 'coc.nvim'
+import { workspace, Uri, Disposable } from 'coc.nvim'
 import { existsSync, readFileSync } from 'fs'
 import * as path from 'path'
-import { Disposable } from 'vscode-languageserver-protocol'
 import { addToOutput } from './errorHandler'
 import { getConfig } from './utils'
 

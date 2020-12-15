@@ -1,5 +1,4 @@
-import { commands, OutputChannel, workspace } from 'coc.nvim'
-import { Disposable } from 'vscode-languageserver-protocol'
+import { commands, OutputChannel, window, Disposable } from 'coc.nvim'
 
 let outputChannel: OutputChannel
 /**
@@ -82,7 +81,7 @@ export function safeExecution(
  */
 export function setupErrorHandler(): Disposable {
   // Setup the outputChannel
-  outputChannel = workspace.createOutputChannel('prettier')
+  outputChannel = window.createOutputChannel('prettier')
 
   return commands.registerCommand('prettier.open-output', () => {
     outputChannel.show()

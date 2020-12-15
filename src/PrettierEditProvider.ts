@@ -1,17 +1,13 @@
 import {
-  Uri,
-  workspace,
   DocumentFormattingEditProvider,
-  DocumentRangeFormattingEditProvider,
-} from 'coc.nvim'
-import path from 'path'
-import {
+  DocumentRangeFormattingEditProvider, Uri, window, workspace,
   CancellationToken,
   FormattingOptions,
   Range,
   TextDocument,
-  TextEdit,
-} from 'vscode-languageserver-protocol'
+  TextEdit
+} from 'coc.nvim'
+import path from 'path'
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
 import {
@@ -21,13 +17,13 @@ import {
   PrettierEslintFormat,
   PrettierStylelint,
   PrettierTslintFormat,
-  PrettierVSCodeConfig,
+  PrettierVSCodeConfig
 } from './types.d'
 import {
   allLanguages,
   getConfig,
   getParsersFromLanguageId,
-  getPrettierInstance,
+  getPrettierInstance
 } from './utils'
 
 /**
@@ -91,10 +87,10 @@ function mergeConfig(
 ): any {
   return hasPrettierConfig
     ? Object.assign(
-        { parser: vscodeConfig.parser }, // always merge our inferred parser in
-        prettierConfig,
-        additionalConfig
-      )
+      { parser: vscodeConfig.parser }, // always merge our inferred parser in
+      prettierConfig,
+      additionalConfig
+    )
     : Object.assign(vscodeConfig, prettierConfig, additionalConfig)
 }
 /**
@@ -124,7 +120,7 @@ export async function format(
 
   let supportedLanguages = allLanguages(resolvedPrettier)
   if (supportedLanguages.indexOf(languageId) == -1) {
-    workspace.showMessage(`${languageId} not supported by prettier`, 'error')
+    window.showMessage(`${languageId} not supported by prettier`, 'error')
     return
   }
 
@@ -279,18 +275,17 @@ export async function format(
 export function fullDocumentRange(document: TextDocument): Range {
   const lastLineId = document.lineCount - 1
   let doc = workspace.getDocument(document.uri)
-
-  return Range.create(
-    { character: 0, line: 0 },
-    { character: doc.getline(lastLineId).length, line: lastLineId }
-  )
+  return {
+    start: { character: 0, line: 0 },
+    end: { character: doc.getline(lastLineId).length, line: lastLineId }
+  }
 }
 
 class PrettierEditProvider
   implements
-    DocumentRangeFormattingEditProvider,
-    DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
+  DocumentRangeFormattingEditProvider,
+  DocumentFormattingEditProvider {
+  constructor(private _fileIsIgnored: (filePath: string) => boolean) { }
 
   public provideDocumentRangeFormattingEdits(
     document: TextDocument,
@@ -322,11 +317,14 @@ class PrettierEditProvider
     }
 
     const code = await format(document.getText(), document, options)
-    const edits = [await TextEdit.replace(fullDocumentRange(document), code)]
+    const edits: TextEdit[] = [{
+      range: fullDocumentRange(document),
+      newText: code
+    }]
     const { disableSuccessMessage } = getConfig()
 
     if (edits && edits.length && !disableSuccessMessage) {
-      workspace.showMessage('Formatted by prettier')
+      window.showMessage('Formatted by prettier')
     }
 
     addToOutput(`Formatted file: ${document.uri}`)

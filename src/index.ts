@@ -1,27 +1,13 @@
-import {
-  ExtensionContext,
-  events,
-  workspace,
-  languages,
-  commands,
-  Uri,
-} from 'coc.nvim'
-import {
-  Disposable,
-  DocumentSelector,
-  TextEdit,
-} from 'vscode-languageserver-protocol'
+import { commands, events, ExtensionContext, languages, Disposable, DocumentSelector, Uri, window, workspace } from 'coc.nvim'
 import configFileListener from './configCacheHandler'
 import { setupErrorHandler } from './errorHandler'
 import ignoreFileHandler from './ignoreFileHandler'
 import EditProvider, { format, fullDocumentRange } from './PrettierEditProvider'
-import {
-  rangeLanguages,
-  enabledLanguages,
-  hasLocalPrettierInstalled,
-  getPrettierInstance,
-} from './utils'
 import { Prettier } from './types'
+import {
+  enabledLanguages,
+  getPrettierInstance, hasLocalPrettierInstalled, rangeLanguages
+} from './utils'
 
 interface Selectors {
   rangeLanguageSelector: DocumentSelector
@@ -74,7 +60,7 @@ function selectors(prettierInstance: Prettier): Selectors {
 function wait(ms: number): Promise<any> {
   return new Promise(resolve => {
     setTimeout(() => {
-      resolve()
+      resolve(undefined)
     }, ms)
   })
 }
@@ -83,7 +69,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(setupErrorHandler())
   const { fileIsIgnored } = ignoreFileHandler(context.subscriptions)
   const editProvider = new EditProvider(fileIsIgnored)
-  const statusItem = workspace.createStatusBarItem(0)
+  const statusItem = window.createStatusBarItem(0)
   context.subscriptions.push(statusItem)
   const config = workspace.getConfiguration('prettier')
   statusItem.text = config.get<string>('statusItemText', 'Prettier')
@@ -148,7 +134,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
         (!hasLocalPrettierInstalled(Uri.parse(document.uri).fsPath) ||
           document.schema != 'file')
       ) {
-        workspace.showMessage(
+        window.showMessage(
           `Flag prettier.onlyUseLocalVersion is set, but prettier is not installed locally. No operation will be made.`,
           'warning'
         )
@@ -160,7 +146,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
         {}
       ).then(code => {
         if (code == null) return null
-        return [TextEdit.replace(fullDocumentRange(document.textDocument), code),]
+        return [{
+          range: fullDocumentRange(document.textDocument),
+          newText: code
+        }]
       })
       if (edits && edits.length) {
         await document.applyEdits(edits)
