@@ -161,7 +161,7 @@ _Note: Disabling a language enabled in a parent folder will prevent formatting i
 
 #### prettier.statusItemText (default: "Prettier")
 
-Text of status item indicating current buffer can't be formatted by prettier.
+Text of status item indicating current buffer can be formatted by prettier.
 
 #### prettier.onlyUseLocalVersion (default: false)
 
