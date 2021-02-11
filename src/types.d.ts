@@ -6,6 +6,7 @@ export type ParserOption =
   | 'less'
   | 'scss'
   | 'typescript'
+  | 'babel-ts'
   | 'json'
   | 'json-stringify'
   | 'graphql'
@@ -13,7 +14,7 @@ export type ParserOption =
 
 type TrailingCommaOption = 'none' | 'es5' | 'all'
 
-type PrettierPlugin = string | object;
+type PrettierPlugin = string | object
 
 interface PrettierSupportInfoOptions {
   plugins?: PrettierPlugin[]
@@ -99,7 +100,7 @@ interface ExtensionConfig {
   /**
    * Only use the version of prettier installed by the client, ignoring the version bundled with coc-prettier
    */
-  onlyUseLocalVersion: boolean,
+  onlyUseLocalVersion: boolean
   /**
    * Disable the 'Formatted by prettier' message which is echoed every time a file is successfully formatted
    */
@@ -125,9 +126,7 @@ export interface Prettier {
       editorconfig?: boolean
     }
   ) => Promise<PrettierConfig>
-  resolveConfigFile: (
-    filePath: string,
-  ) => Promise<string>
+  resolveConfigFile: (filePath: string) => Promise<string>
   clearConfigCache: () => void
   getSupportInfo(options?: PrettierSupportInfoOptions): PrettierSupportInfo
   readonly version: string
