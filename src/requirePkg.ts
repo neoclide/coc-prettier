@@ -1,9 +1,6 @@
 import { addToOutput } from './errorHandler'
 import resolveFrom from 'resolve-from'
-
-declare var __webpack_require__: any
-declare var __non_webpack_require__: any
-const requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require
+import path from 'path'
 
 interface Options {
   silent: boolean
@@ -26,14 +23,22 @@ function requireLocalPkg(
 
   if (modulePath !== void 0) {
     try {
-      return requireFunc(modulePath)
+      return require(modulePath)
     } catch (e) {
       if (!options.silent) {
         addToOutput(`Failed to load require ${pkgName} from ${modulePath}.${options.ignoreBundled ? `` : ` Using bundled`}`, 'Error')
       }
     }
   }
-
-  return options.ignoreBundled ? null : requireFunc(pkgName)
+  if (options.ignoreBundled) {
+    return null
+  }
+  try {
+    return require(pkgName)
+  } catch (e) {
+    addToOutput(`Failed to load ${pkgName} from ${path.dirname(__dirname)}`, 'Error')
+  }
+  return null
 }
+
 export { requireLocalPkg }
