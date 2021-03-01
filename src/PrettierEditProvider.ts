@@ -1,9 +1,6 @@
 import {
   DocumentFormattingEditProvider,
-  DocumentRangeFormattingEditProvider,
-  Uri,
-  window,
-  workspace,
+  DocumentRangeFormattingEditProvider, Uri, window, workspace,
   CancellationToken,
   FormattingOptions,
   Range,
@@ -90,10 +87,10 @@ function mergeConfig(
 ): any {
   return hasPrettierConfig
     ? Object.assign(
-        { parser: vscodeConfig.parser }, // always merge our inferred parser in
-        prettierConfig,
-        additionalConfig
-      )
+      { parser: vscodeConfig.parser }, // always merge our inferred parser in
+      prettierConfig,
+      additionalConfig
+    )
     : Object.assign(vscodeConfig, prettierConfig, additionalConfig)
 }
 /**
@@ -148,18 +145,7 @@ export async function format(
     parser = vscodeConfig.parser
   } else {
     parser = dynamicParsers[0]
-
-    // 'typescript' parser doesn't support JSX therefore we are looking for
-    // 'babel-ts' parser
-    if (
-      parser === 'typescript' &&
-      languageId == 'typescriptreact' &&
-      dynamicParsers.includes('babel-ts')
-    ) {
-      parser = 'babel-ts'
-    }
   }
-
   const doesParserSupportEslint = [
     'javascript',
     'javascriptreact',
@@ -291,15 +277,15 @@ export function fullDocumentRange(document: TextDocument): Range {
   let doc = workspace.getDocument(document.uri)
   return {
     start: { character: 0, line: 0 },
-    end: { character: doc.getline(lastLineId).length, line: lastLineId },
+    end: { character: doc.getline(lastLineId).length, line: lastLineId }
   }
 }
 
 class PrettierEditProvider
   implements
-    DocumentRangeFormattingEditProvider,
-    DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
+  DocumentRangeFormattingEditProvider,
+  DocumentFormattingEditProvider {
+  constructor(private _fileIsIgnored: (filePath: string) => boolean) { }
 
   public provideDocumentRangeFormattingEdits(
     document: TextDocument,
@@ -331,12 +317,10 @@ class PrettierEditProvider
     }
 
     const code = await format(document.getText(), document, options)
-    const edits: TextEdit[] = [
-      {
-        range: fullDocumentRange(document),
-        newText: code,
-      },
-    ]
+    const edits: TextEdit[] = [{
+      range: fullDocumentRange(document),
+      newText: code
+    }]
     const { disableSuccessMessage } = getConfig()
 
     if (edits && edits.length && !disableSuccessMessage) {
