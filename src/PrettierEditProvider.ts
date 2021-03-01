@@ -188,6 +188,7 @@ export async function format(
       useTabs: vscodeConfig.useTabs,
       proseWrap: vscodeConfig.proseWrap,
       arrowParens: vscodeConfig.arrowParens,
+      filepath: fileName,
     }
   )
 
