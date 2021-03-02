@@ -2,7 +2,7 @@
   "extends": "./node_modules/@chemzqm/tsconfig/tsconfig.json",
   "compilerOptions": {
     "outDir": "lib",
-    "target": "es2015",
+    "target": "es2017",
     "module": "commonjs",
     "moduleResolution": "node",
     "declaration": false,
