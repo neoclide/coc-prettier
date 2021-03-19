@@ -87,7 +87,10 @@ function mergeConfig(
 ): any {
   return hasPrettierConfig
     ? Object.assign(
-      { parser: vscodeConfig.parser }, // always merge our inferred parser in
+      {
+        parser: vscodeConfig.parser, // always merge our inferred parser in
+        filepath: vscodeConfig.filepath // always merge filepath to detect file type
+      },
       prettierConfig,
       additionalConfig
     )
