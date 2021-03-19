@@ -1,6 +1,6 @@
 {
   "name": "coc-prettier",
-  "version": "1.1.22",
+  "version": "1.1.23",
   "description": "prettier extension for coc.nvim",
   "main": "lib/index.js",
   "publisher": "chemzqm",
