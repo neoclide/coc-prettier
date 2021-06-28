@@ -119,6 +119,7 @@ export async function format(
       `Prettier module not found, prettier.onlyUseLocalVersion: ${vscodeConfig.onlyUseLocalVersion}`,
       'Error'
     )
+    return
   }
 
   let supportedLanguages = allLanguages(resolvedPrettier)
@@ -289,7 +290,7 @@ class PrettierEditProvider
   implements
   DocumentRangeFormattingEditProvider,
   DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) { }
+  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
 
   public provideDocumentRangeFormattingEdits(
     document: TextDocument,
