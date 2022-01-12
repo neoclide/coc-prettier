@@ -186,7 +186,6 @@ export async function format(
       jsxSingleQuote: vscodeConfig.jsxSingleQuote,
       trailingComma: vscodeConfig.trailingComma,
       bracketSpacing: vscodeConfig.bracketSpacing,
-      jsxBracketSameLine: vscodeConfig.jsxBracketSameLine,
       parser,
       semi: vscodeConfig.semi,
       useTabs: vscodeConfig.useTabs,

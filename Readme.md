@@ -96,10 +96,6 @@ Controls the printing of trailing commas wherever possible. Valid options:
 
 Controls the printing of spaces inside object literals
 
-#### prettier.jsxBracketSameLine (default: false)
-
-If true, puts the `>` of a multi-line jsx element at the end of the last line instead of being alone on the next line
-
 #### prettier.parser (default: 'babylon') - JavaScript only
 
 Which parser to use. Valid options are 'flow' and 'babylon'.
