@@ -13,7 +13,7 @@ export type ParserOption =
 
 type TrailingCommaOption = 'none' | 'es5' | 'all'
 
-type PrettierPlugin = string | object;
+type PrettierPlugin = string | object
 
 interface PrettierSupportInfoOptions {
   plugins?: PrettierPlugin[]
@@ -52,7 +52,6 @@ export interface PrettierConfig {
   singleQuote: boolean
   trailingComma: TrailingCommaOption
   bracketSpacing: boolean
-  jsxBracketSameLine: boolean
   parser: ParserOption
   semi: boolean
   useTabs: boolean
