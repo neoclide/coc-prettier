@@ -93,7 +93,7 @@ You can use [coc.nvim settings](#prettier-settings) to configure prettier. Setti
 ### Setup `Prettier` command in your `init.vim` or `.vimrc`
 
 ```
-command! -nargs=0 Prettier :CocCommand prettier.formatFile
+command! -nargs=0 Prettier :CocCommand prettier.forceFormatDocument
 ```
 
 Then you can use `:Prettier` to format the current buffer.
@@ -133,13 +133,13 @@ Add:
 
 to setup the languages which you want to format on save.
 
-**Note:** prettier extension have lower priority, if the document have other
+**Note:** if prettier extension have lower priority, if the document have other
 registered document format provider, prettier would not work.
 
-To disable coc-prettier for special filetypes, you can create `.prettierignore`
+To disable coc-prettier for specific files, you can create `.prettierignore`
 file. Or use `"prettier.disableLanguages"` configuration, or
 `"prettier.formatterPriority": -1` configuration to make it not override format
-feature from languageserver.
+provider from other coc.nvim extensions.
 
 To check the format is done by prettier, check out the output message after
 format, which should contains `Formatted by prettier`.
