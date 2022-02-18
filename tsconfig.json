@@ -6,7 +6,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "declaration": false,
-    "lib": ["es2018"],
+    "lib": ["ES2020"],
     "plugins": []
   },
   "include": ["src"],
