@@ -1,4 +1,4 @@
-import { Uri } from "coc.nvim"
+import { Uri, workspace } from "coc.nvim"
 import fs from 'fs'
 import path from 'path'
 import { promisify } from "util"
@@ -29,5 +29,6 @@ export class TemplateService {
 
     this.loggingService.logInfo(`Writing .prettierrc to '${outputPath}'`)
     await promisify(fs.writeFile)(outputPath, templateSource, { encoding: 'utf8' })
+    await workspace.jumpTo(Uri.file(outputPath).toString())
   }
 }
