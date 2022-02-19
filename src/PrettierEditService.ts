@@ -297,9 +297,9 @@ export default class PrettierEditService implements Disposable {
 
     const customLanguageSelectors: DocumentFilter[] = uri
       ? documentSelectors.map((pattern) => ({
-          pattern: `${uri.fsPath}/${pattern}`,
-          scheme: 'file'
-        }))
+        pattern: `${uri.fsPath}/${pattern}`,
+        scheme: 'file'
+      }))
       : []
 
     const defaultLanguageSelectors: DocumentFilter[] = [
@@ -324,9 +324,6 @@ export default class PrettierEditService implements Disposable {
         return false
       return true
     })
-    console.log('=====')
-    console.log(JSON.stringify(languageSelector, null, 2))
-    console.log(JSON.stringify(rangeLanguageSelector, null, 2))
     return { languageSelector, rangeLanguageSelector }
   }
 
