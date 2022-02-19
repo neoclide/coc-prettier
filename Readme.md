@@ -90,15 +90,21 @@ You can use [coc.nvim settings](#prettier-settings) to configure prettier. Setti
 
 ## Usage
 
-### Setup `Prettier` command in your `init.vim` or `.vimrc`
+### Create custom vim command
+
+Setup `Prettier` command in your `init.vim` or `.vimrc`
 
 ```
 command! -nargs=0 Prettier :CocCommand prettier.forceFormatDocument
 ```
 
-Then you can use `:Prettier` to format the current buffer.
+Then you can use `:Prettier` to format the current buffer by coc-prettier.
 
-### Remap keys for range format in your `init.vim` or `.vimrc`
+Or use `:CocCommand` to open command list.
+
+### Range format
+
+Remap keys for range format in your `init.vim` or `.vimrc`
 
 ```
 vmap <leader>f  <Plug>(coc-format-selected)
@@ -119,7 +125,7 @@ graphql
 handlebars
 ```
 
-### Update your `coc-settings.json` for format on save.
+### Format On Save.
 
 Open settings file with:
 
@@ -133,8 +139,8 @@ Add:
 
 to setup the languages which you want to format on save.
 
-**Note:** if prettier extension have lower priority, if the document have other
-registered document format provider, prettier would not work.
+**Note:** if prettier extension have lower priority, and document have other
+registered document format provider, prettier will be ignored.
 
 To disable coc-prettier for specific files, you can create `.prettierignore`
 file. Or use `"prettier.disableLanguages"` configuration, or
@@ -146,9 +152,11 @@ format, which should contains `Formatted by prettier`.
 
 Other useful commands:
 
-- `:CocCommand prettier.formatFile`: force prettier to format the current buffer, even if another
-  format provider exists.
+- `:CocCommand prettier.formatFile`: force prettier to format the current
+  buffer, even if another format provider exists.
 - `:noa w`: save the current buffer _without_ formatting.
+- `:CocCommand prettier.createConfigFile`: Create `.prettierrc` for current
+  document.
 
 ### Format Document (Forced)
 
