@@ -83,7 +83,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     fileName: string
   ): Promise<PrettierNodeModule | undefined> {
 
-    const { prettierPath, resolveGlobalModules } = getConfig(
+    const { prettierPath, resolveGlobalModules, onlyUseLocalVersion } = getConfig(
       Uri.file(fileName)
     )
 
@@ -186,6 +186,10 @@ export class ModuleResolver implements ModuleResolverInterface {
       }
       return moduleInstance
     } else {
+      if (onlyUseLocalVersion) {
+        this.loggingService.logInfo('Ignored bundled prettier by onlyUseLocalVersion configuration.')
+        return undefined
+      }
       this.loggingService.logDebug(USING_BUNDLED_PRETTIER)
       return prettier
     }

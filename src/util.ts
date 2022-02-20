@@ -31,7 +31,7 @@ export function getConfig(uri?: Uri): PrettierVSCodeConfig {
   const config = workspace.getConfiguration(
     'prettier',
     uri ? uri.toString() : undefined
-  ) as unknown as PrettierVSCodeConfig
+  ) as PrettierVSCodeConfig
 
   return config as PrettierVSCodeConfig
 }

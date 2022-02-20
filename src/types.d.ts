@@ -47,6 +47,10 @@ interface IExtensionConfig {
    */
   formatterPriority: number
   /**
+   * Not use bundled when true.
+   */
+  onlyUseLocalVersion: boolean
+  /**
    * List of disabled languages.
    */
   disableLanguages: string[]
