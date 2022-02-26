@@ -165,7 +165,6 @@ export default class PrettierEditService implements Disposable {
       // We set as ready for untitled documents,
       // but return because these will always
       // use the global registered formatter.
-      this.statusBar.update(FormatterStatus.Ready)
       return
     }
     const workspaceFolder = workspace.getWorkspaceFolder(doc.uri)

@@ -15,8 +15,8 @@ export class StatusBar {
     // Setup the statusBarItem
     this.statusBarItem = window.createStatusBarItem(0, {})
     this.statusBarItem.text = this.text
-    this.update(FormatterStatus.Ready)
-    this.statusBarItem.show()
+    // this.update(FormatterStatus.Ready)
+    // this.statusBarItem.show()
   }
 
   /**
