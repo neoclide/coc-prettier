@@ -1,3 +1,7 @@
+## [9.3.0]
+
+- Added additional debug logs.
+
 ## [9.2.0]
 
 - Removed support for legacy linter integration. [See documentation](https://github.com/neoclide/coc-prettier#linter-integration) on how to configure linters.

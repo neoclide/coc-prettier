@@ -107,7 +107,7 @@ export class ModuleResolver implements ModuleResolverInterface {
       }
 
       this.loggingService.logInfo(
-        `Attempted to load Prettier module from ${modulePath || moduleDirectory || "package.json"
+        `Attempted to determine module path from ${modulePath || moduleDirectory || "package.json"
         }`
       )
       this.loggingService.logError(FAILED_TO_LOAD_MODULE_MESSAGE, error)
@@ -141,6 +141,9 @@ export class ModuleResolver implements ModuleResolverInterface {
       // First check module cache
       moduleInstance = this.path2Module.get(modulePath)
       if (moduleInstance) {
+        this.loggingService.logDebug(
+          `Local prettier module path: '${modulePath}'`
+        )
         return moduleInstance
       } else {
         try {
