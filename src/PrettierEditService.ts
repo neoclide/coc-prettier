@@ -326,16 +326,43 @@ export default class PrettierEditService implements Disposable {
     document: LinesTextDocument,
     options: ExtensionFormattingOptions
   ): Promise<TextEdit[]> => {
-    const startTime = new Date().getTime()
+    const startTime = Date.now()
     const result = await this.format(document.getText(), document, options)
     if (!result) {
       // No edits happened, return never so coc-prettier can try other formatters
       return []
     }
-    const duration = new Date().getTime() - startTime
-    this.loggingService.logInfo(`Formatting completed in ${duration / 1000}ms.`)
-    return [TextEdit.replace(this.fullDocumentRange(document), result)]
+    this.loggingService.logInfo(`Formatting completed in ${Date.now() - startTime}ms.`)
+    return [this.minimalEdit(document, result)]
   }
+
+  private minimalEdit(document: TextDocument, string1: string) {
+    const string0 = document.getText()
+    // length of common prefix
+    let i = 0
+    while (
+      i < string0.length &&
+      i < string1.length &&
+      string0[i] === string1[i]
+    ) {
+      ++i
+    }
+    // length of common suffix
+    let j = 0
+    while (
+      i + j < string0.length &&
+      i + j < string1.length &&
+      string0[string0.length - j - 1] === string1[string1.length - j - 1]
+    ) {
+      ++j
+    }
+    const newText = string1.substring(i, string1.length - j)
+    const pos0 = document.positionAt(i)
+    const pos1 = document.positionAt(string0.length - j)
+
+    return TextEdit.replace(Range.create(pos0, pos1), newText)
+  }
+
 
   /**
    * Format the given text with user's configuration.
@@ -516,11 +543,5 @@ export default class PrettierEditService implements Disposable {
     }
 
     return options
-  }
-
-  private fullDocumentRange(document: LinesTextDocument): Range {
-    const lastLineId = document.lineCount - 1
-    let doc = workspace.getDocument(document.uri)
-    return Range.create(0, 0, lastLineId, doc.getline(lastLineId).length)
   }
 }
