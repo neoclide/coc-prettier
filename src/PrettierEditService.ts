@@ -6,8 +6,9 @@ import {
   TextDocument,
   TextEdit,
   Uri,
+  window,
   workspace,
-  events,
+  TextEditor,
   LinesTextDocument
 } from 'coc.nvim'
 import { getParserFromLanguageId } from './languageFilters'
@@ -93,16 +94,11 @@ export default class PrettierEditService implements Disposable {
     prettierConfigWatcher.onDidCreate(this.prettierConfigChanged)
     prettierConfigWatcher.onDidDelete(this.prettierConfigChanged)
 
-    const textEditorChange = events.on('BufEnter', async () => {
-      let doc = await workspace.document
-      this.handleActiveTextEditorChanged(doc.bufnr)
+    const textEditorChange = window.onDidChangeActiveTextEditor(editor => {
+      this.handleActiveTextEditorChanged(editor)
     })
 
-    //   window.onDidChangeActiveTextEditor(
-    //   this.handleActiveTextEditorChanged
-    // )
-
-    this.handleActiveTextEditorChanged(workspace.bufnr)
+    this.handleActiveTextEditorChanged(window.activeTextEditor)
 
     return [
       packageWatcher,
@@ -153,12 +149,12 @@ export default class PrettierEditService implements Disposable {
     this.statusBar.update(FormatterStatus.Ready)
   }
 
-  private handleActiveTextEditorChanged = async (bufnr: number) => {
-    let doc = workspace.getDocument(bufnr)
-    if (!doc || !doc.attached) {
+  private handleActiveTextEditorChanged = async (editor: TextEditor | undefined) => {
+    if (!editor || !editor.document.attached) {
       this.statusBar.hide()
       return
     }
+    let doc = editor.document
     const { disableLanguages } = getConfig(Uri.parse(doc.uri))
     const uri = Uri.parse(doc.uri)
     if (uri.scheme !== 'file') {
@@ -462,7 +458,7 @@ export default class PrettierEditService implements Disposable {
     parser: PrettierBuiltInParserName,
     vsCodeConfig: PrettierOptions,
     configOptions: PrettierOptions | null,
-    extentionFormattingOptions: ExtensionFormattingOptions
+    extensionFormattingOptions: ExtensionFormattingOptions
   ): Partial<PrettierOptions> {
     const fallbackToVSCodeConfig = configOptions === null
 
@@ -495,12 +491,12 @@ export default class PrettierEditService implements Disposable {
 
     let rangeFormattingOptions: RangeFormattingOptions | undefined
     if (
-      extentionFormattingOptions.rangeEnd &&
-      extentionFormattingOptions.rangeStart
+      extensionFormattingOptions.rangeEnd &&
+      extensionFormattingOptions.rangeStart
     ) {
       rangeFormattingOptions = {
-        rangeEnd: extentionFormattingOptions.rangeEnd,
-        rangeStart: extentionFormattingOptions.rangeStart
+        rangeEnd: extensionFormattingOptions.rangeEnd,
+        rangeStart: extensionFormattingOptions.rangeStart
       }
     }
 
@@ -515,7 +511,7 @@ export default class PrettierEditService implements Disposable {
       ...(configOptions || {})
     }
 
-    if (extentionFormattingOptions.force && options.requirePragma === true) {
+    if (extensionFormattingOptions.force && options.requirePragma === true) {
       options.requirePragma = false
     }
 
