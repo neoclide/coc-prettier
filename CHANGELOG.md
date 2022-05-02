@@ -1,6 +1,7 @@
 ## [9.3.0]
 
 - Added additional debug logs.
+- Create minimal textEdit.
 
 ## [9.2.0]
 
