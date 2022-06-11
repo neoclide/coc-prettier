@@ -180,7 +180,7 @@ prettier.bracketSpacing
 prettier.endOfLine
 prettier.htmlWhitespaceSensitivity
 prettier.insertPragma
-prettier.jsxBracketSameLine
+prettier.bracketSameLine
 prettier.jsxSingleQuote
 prettier.printWidth
 prettier.proseWrap
