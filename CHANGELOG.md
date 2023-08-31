@@ -46,7 +46,7 @@
 
 ## [1.1.13]
 
-- Just bumping minor version to accomadate `yarn upgrade` to fix issue reported by `yarn audit`.
+- Just bumping minor version to accommodate `yarn upgrade` to fix issue reported by `yarn audit`.
 
 ## [1.1.0]
 
