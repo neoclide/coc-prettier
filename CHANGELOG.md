@@ -1,3 +1,7 @@
+## [9.3.2]
+
+- Fix issue with prettier v3.
+
 ## [9.3.0]
 
 - Added additional debug logs.
