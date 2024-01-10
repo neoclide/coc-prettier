@@ -363,7 +363,6 @@ export default class PrettierEditService implements Disposable {
     return TextEdit.replace(Range.create(pos0, pos1), newText)
   }
 
-
   /**
    * Format the given text with user's configuration.
    * @param text Text to format
@@ -445,7 +444,7 @@ export default class PrettierEditService implements Disposable {
       // somebody has registered a custom file extension without properly
       // configuring the parser in their prettier config.
       this.loggingService.logWarning(`Parser not inferred, trying languageId.`)
-      const languages = prettierInstance.getSupportInfo().languages
+      const languages = (await prettierInstance.getSupportInfo()).languages
       parser = getParserFromLanguageId(languages, Uri.parse(uri), languageId)
     }
 

@@ -16,8 +16,8 @@ type PrettierOptions = prettier.Options
 type PrettierFileInfoOptions = prettier.FileInfoOptions
 
 type PrettierModule = {
-  format(source: string, options?: prettier.Options): string
-  getSupportInfo(): { languages: PrettierSupportLanguage[] }
+  format(source: string, options?: prettier.Options): Promise<string>
+  getSupportInfo(): Promise<{ languages: PrettierSupportLanguage[] }>
   getFileInfo(
     filePath: string,
     options?: PrettierFileInfoOptions
