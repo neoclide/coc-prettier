@@ -469,7 +469,7 @@ export default class PrettierEditService implements Disposable {
     this.loggingService.logInfo('Prettier Options:', prettierOptions)
 
     try {
-      const formattedText = prettierInstance.format(text, prettierOptions)
+      const formattedText = await prettierInstance.format(text, prettierOptions)
       this.statusBar.update(FormatterStatus.Success)
 
       return formattedText
