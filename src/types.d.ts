@@ -26,7 +26,7 @@ type PrettierModule = {
 
 type ModuleResolverInterface = {
   getPrettierInstance(fileName: string): Promise<PrettierModule | undefined>
-  getGlobalPrettierInstance(): PrettierModule
+  getGlobalPrettierInstance(): Promise<PrettierModule>
   getResolvedConfig(
     doc: TextDocument,
     vscodeConfig: PrettierVSCodeConfig
