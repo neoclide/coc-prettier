@@ -214,7 +214,7 @@ export default class PrettierEditService implements Disposable {
 
   public async registerGlobal() {
     const selectors = await this.getSelectors(
-      this.moduleResolver.getGlobalPrettierInstance()
+      await this.moduleResolver.getGlobalPrettierInstance()
     )
     this.registerDocumentFormatEditorProviders(selectors)
     this.loggingService.logDebug('Enabling Prettier globally', selectors)
