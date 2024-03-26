@@ -44,9 +44,11 @@ const PRETTIER_CONFIG_FILES = [
   '.prettierrc.toml',
   '.prettierrc.js',
   '.prettierrc.cjs',
-  'package.json',
+  '.prettierrc.mjs',
   'prettier.config.js',
   'prettier.config.cjs',
+  'prettier.config.mjs',
+  'package.json',
   '.editorconfig'
 ]
 
@@ -212,7 +214,7 @@ export default class PrettierEditService implements Disposable {
 
   public async registerGlobal() {
     const selectors = await this.getSelectors(
-      this.moduleResolver.getGlobalPrettierInstance()
+      await this.moduleResolver.getGlobalPrettierInstance()
     )
     this.registerDocumentFormatEditorProviders(selectors)
     this.loggingService.logDebug('Enabling Prettier globally', selectors)
@@ -363,7 +365,6 @@ export default class PrettierEditService implements Disposable {
     return TextEdit.replace(Range.create(pos0, pos1), newText)
   }
 
-
   /**
    * Format the given text with user's configuration.
    * @param text Text to format
@@ -445,7 +446,7 @@ export default class PrettierEditService implements Disposable {
       // somebody has registered a custom file extension without properly
       // configuring the parser in their prettier config.
       this.loggingService.logWarning(`Parser not inferred, trying languageId.`)
-      const languages = prettierInstance.getSupportInfo().languages
+      const languages = (await prettierInstance.getSupportInfo()).languages
       parser = getParserFromLanguageId(languages, Uri.parse(uri), languageId)
     }
 
@@ -468,7 +469,7 @@ export default class PrettierEditService implements Disposable {
     this.loggingService.logInfo('Prettier Options:', prettierOptions)
 
     try {
-      const formattedText = prettierInstance.format(text, prettierOptions)
+      const formattedText = await prettierInstance.format(text, prettierOptions)
       this.statusBar.update(FormatterStatus.Success)
 
       return formattedText

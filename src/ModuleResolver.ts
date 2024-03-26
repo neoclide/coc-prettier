@@ -3,7 +3,7 @@ import { TextDocument, Uri, window } from "coc.nvim"
 import * as findUp from "find-up"
 import * as fs from "fs"
 import * as path from "path"
-import * as prettier from "prettier"
+import type * as prettier from "prettier"
 import * as resolve from "resolve"
 import * as semver from "semver"
 import { resolveGlobalNodePath, resolveGlobalYarnPath } from "./Files"
@@ -71,8 +71,8 @@ export class ModuleResolver implements ModuleResolverInterface {
     this.findPkgCache = new Map()
   }
 
-  public getGlobalPrettierInstance(): PrettierNodeModule {
-    return prettier
+  public async getGlobalPrettierInstance(): Promise<PrettierNodeModule> {
+    return await import('prettier')
   }
 
   /**
@@ -194,7 +194,7 @@ export class ModuleResolver implements ModuleResolverInterface {
         return undefined
       }
       this.loggingService.logDebug(USING_BUNDLED_PRETTIER)
-      return prettier
+      return await import('prettier')
     }
   }
 
@@ -209,7 +209,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     let configPath: string | undefined
     try {
       if (!isVirtual) {
-        configPath = (await prettier.resolveConfigFile(fileName)) ?? undefined
+        configPath = (await (await import('prettier')).resolveConfigFile(fileName)) ?? undefined
       }
     } catch (error) {
       this.loggingService.logError(
@@ -233,7 +233,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     try {
       resolvedConfig = isVirtual
         ? null
-        : await prettier.resolveConfig(fileName, resolveConfigOptions)
+        : await (await import('prettier')).resolveConfig(fileName, resolveConfigOptions)
     } catch (error) {
       this.loggingService.logError(
         "Invalid prettier configuration file detected.",
@@ -262,7 +262,7 @@ export class ModuleResolver implements ModuleResolverInterface {
    * Clears the module and config cache
    */
   public async dispose() {
-    prettier.clearConfigCache()
+    (await import('prettier')).clearConfigCache()
     this.path2Module.forEach((module) => {
       try {
         module.clearConfigCache()
