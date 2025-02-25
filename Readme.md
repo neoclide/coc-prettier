@@ -52,6 +52,15 @@ Run vim command:
 :CocInstall coc-prettier
 ```
 
+## Debug log
+
+- Add `"prettier.enableDebugLogs": true` to coc-settings.json opened by `: CocConfig`.
+- Checkout output by `:CocCommand prettier.openOutput`.
+
+## New feature of 11.0.0
+
+- Added configuration properties: `prettier.singleAttributePerLine`, `prettier.jsxBracketSameLine` and `prettier.experimentalTernaries`.
+
 ### Prettier Resolution
 
 This extension will use prettier from your project's local dependencies (recommended). When the `prettier.resolveGlobalModules` is set to `true` the extension can also attempt to resolve global modules. Should prettier not be installed locally with your project's dependencies or globally on the machine, the version of prettier that is bundled with the extension will be used.

@@ -1,15 +1,16 @@
 {
   "name": "coc-prettier",
-  "version": "9.3.2",
-  "description": "prettier extension for coc.nvim",
+  "version": "11.0.0",
+  "description": "Prettier extension for coc.nvim",
   "main": "lib/index.js",
   "publisher": "chemzqm",
   "keywords": [
     "coc.nvim",
     "prettier"
   ],
+  "type": "commonjs",
   "engines": {
-    "coc": ">= 0.0.83"
+    "coc": ">= 0.0.82"
   },
   "repository": {
     "type": "git",
@@ -109,6 +110,25 @@
           "default": false,
           "markdownDescription": "Enable debug logs for troubleshooting.",
           "scope": "resource"
+        },
+        "prettier.singleAttributePerLine": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%ext.config.singleAttributePerLine%",
+          "scope": "language-overridable"
+        },
+        "prettier.jsxBracketSameLine": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%ext.config.jsxBracketSameLine%",
+          "deprecationMessage": "%ext.config.jsxBracketSameLineDeprecation%",
+          "scope": "language-overridable"
+        },
+        "prettier.experimentalTernaries": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%ext.config.experimentalTernaries%",
+          "scope": "language-overridable"
         },
         "prettier.onlyUseLocalVersion": {
           "type": "boolean",
@@ -299,13 +319,14 @@
     "@chemzqm/tsconfig": "^0.0.3",
     "@types/node": "^16.18",
     "@types/semver": "^7.3.9",
+    "@types/prettier": "^2.7.2",
     "coc.nvim": "0.0.83-next.19",
     "esbuild": "^0.25.0",
     "find-up": "^5.0.0",
     "ignore": "^5.2.0",
-    "resolve": "^1.22.0",
+    "resolve": "^1.22.8",
     "rimraf": "^3.0.2",
-    "semver": "^7.3.7",
+    "semver": "^7.6.3",
     "typescript": "^5.7.3"
   },
   "dependencies": {

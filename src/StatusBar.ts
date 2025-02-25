@@ -1,12 +1,12 @@
-import { StatusBarItem, window } from "coc.nvim"
+import { StatusBarItem, window } from 'coc.nvim'
 
 export enum FormatterStatus {
-  Ready = "",
-  Success = "",
-  Warn = "Warn",
-  Error = "Error",
-  Ignore = "x",
-  Disabled = "x",
+  Ready = '',
+  Success = '',
+  Warn = 'Warn',
+  Error = 'Error',
+  Ignore = 'x',
+  Disabled = 'x',
 }
 
 export class StatusBar {
@@ -41,5 +41,9 @@ export class StatusBar {
 
   public hide() {
     this.statusBarItem.hide()
+  }
+
+  public dispose() {
+    this.statusBarItem.dispose()
   }
 }

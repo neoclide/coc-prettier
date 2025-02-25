@@ -1,34 +1,36 @@
-import { Uri, workspace } from "coc.nvim"
-import fs from 'fs'
-import path from 'path'
-import { promisify } from "util"
-import { LoggingService } from "./LoggingService"
-import { PrettierModule, PrettierOptions } from "./types"
+import { TextEncoder, promisify } from "util";
+import * as path from 'path'
+import * as fs from 'fs'
+import { LoggingService } from "./LoggingService";
+import { PrettierModule, PrettierOptions } from "./types";
 
 export class TemplateService {
   constructor(
     private loggingService: LoggingService,
     private prettierModule: PrettierModule
   ) {}
-  public async writeConfigFile(folderPath: Uri) {
-    const settings = { tabWidth: 2, useTabs: false }
+  public async writeConfigFile(folderPath: string) {
+    const settings = { tabWidth: 2, useTabs: false };
+    // folderPath.with
 
-    const outputPath = path.join(folderPath.fsPath, '.prettierrc')
+    const outputPath = path.join(folderPath, ".prettierrc");
 
     const formatterOptions: PrettierOptions = {
       /* cspell: disable-next-line */
-      filepath: folderPath.scheme === 'file' ? outputPath : undefined,
+      filepath: outputPath,
       tabWidth: settings.tabWidth,
       useTabs: settings.useTabs,
-    }
+    };
 
-    const templateSource = this.prettierModule.format(
+    const templateSource = await this.prettierModule.format(
       JSON.stringify(settings, null, 2),
       formatterOptions
-    )
+    );
 
-    this.loggingService.logInfo(`Writing .prettierrc to '${outputPath}'`)
-    await promisify(fs.writeFile)(outputPath, templateSource, { encoding: 'utf8' })
-    await workspace.jumpTo(Uri.file(outputPath).toString())
+    this.loggingService.logInfo(`Writing .prettierrc to ${outputPath}`);
+    await promisify(fs.writeFile)(
+      outputPath,
+      new TextEncoder().encode(templateSource)
+    );
   }
 }
