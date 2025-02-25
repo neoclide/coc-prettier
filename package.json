@@ -9,11 +9,11 @@
     "prettier"
   ],
   "engines": {
-    "coc": ">= 0.0.80"
+    "coc": ">= 0.0.83"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/neoclide/coc-prettier.git"
+    "url": "git+https://github.com/neoclide/coc-prettier.git"
   },
   "bugs": {
     "url": "https://github.com/neoclide/coc-prettier/issues"
@@ -297,16 +297,16 @@
   "license": "MIT",
   "devDependencies": {
     "@chemzqm/tsconfig": "^0.0.3",
-    "@types/node": "12.12.0",
+    "@types/node": "^16.18",
     "@types/semver": "^7.3.9",
-    "coc.nvim": "^0.0.81-next.24",
-    "esbuild": "^0.14.38",
+    "coc.nvim": "0.0.83-next.19",
+    "esbuild": "^0.25.0",
     "find-up": "^5.0.0",
     "ignore": "^5.2.0",
     "resolve": "^1.22.0",
     "rimraf": "^3.0.2",
     "semver": "^7.3.7",
-    "typescript": "^4.6.4"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "prettier": "^3.1.1"
