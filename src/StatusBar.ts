@@ -25,6 +25,10 @@ export class StatusBar {
    * @param icon The the icon to use
    */
   public update(result: FormatterStatus): void {
+    if (result = FormatterStatus.Ignore) {
+      this.hide()
+      return
+    }
     this.statusBarItem.text = `${this.text} ${result.toString()}`
     // Waiting for VS Code 1.53: https://github.com/microsoft/vscode/pull/116181
     // if (result === FormattingResult.Error) {
