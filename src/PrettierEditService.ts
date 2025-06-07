@@ -443,9 +443,6 @@ export default class PrettierEditService implements Disposable {
     );
     this.loggingService.logInfo("PrettierInstance:", prettierInstance);
 
-    if (vscodeConfig.onlyUseLocalVersion) {
-      return;
-    }
     if (!prettierInstance) {
       this.loggingService.logError(
         "Prettier could not be loaded. See previous logs for more information."
