@@ -2,10 +2,7 @@ import * as path from "path";
 import { Options, ResolveConfigOptions } from "prettier";
 import * as url from "url";
 import { Worker } from "worker_threads";
-import {
-  PrettierInstance,
-  PrettierInstanceConstructor,
-} from "./PrettierInstance";
+import { PrettierInstance } from "./PrettierInstance";
 import {
   PrettierFileInfoOptions,
   PrettierFileInfoResult,
@@ -16,12 +13,33 @@ import {
 
 let currentCallId = 0;
 
-const worker = new Worker(
-  url.pathToFileURL(path.join(__dirname, "../worker/prettier-instance-worker.js"))
-);
+let worker: Worker | undefined;
 
-export const PrettierWorkerInstance: PrettierInstanceConstructor = class PrettierWorkerInstance
-  implements PrettierInstance {
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(
+      url.pathToFileURL(path.join(__dirname, "../worker/prettier-instance-worker.js"))
+    );
+    const current = worker;
+    current.on("exit", () => {
+      if (worker === current) worker = undefined;
+    });
+  }
+  return worker;
+}
+
+export async function disposeWorker(beforeTerminate?: () => Promise<void>): Promise<void> {
+  const current = worker;
+  // Detach before awaiting cleanup so the next activation gets a fresh worker.
+  worker = undefined;
+  try {
+    if (beforeTerminate) await beforeTerminate();
+  } finally {
+    if (current) await current.terminate();
+  }
+}
+
+export class PrettierWorkerInstance implements PrettierInstance {
   private messageResolvers: Map<
     number,
     {
@@ -32,8 +50,24 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
 
   public version: string | null = null;
 
+  private worker: Worker;
+  private stoppedError: Error | undefined;
+
+  public get isStopped(): boolean {
+    return this.stoppedError !== undefined;
+  }
+
   constructor(private modulePath: string) {
-    worker.on("message", ({ type, id, payload }) => {
+    this.worker = getWorker();
+    const rejectPending = (error: Error) => {
+      this.stoppedError = error;
+      if (worker === this.worker) worker = undefined;
+      for (const resolver of this.messageResolvers.values()) resolver.reject(error);
+      this.messageResolvers.clear();
+    };
+    this.worker.on("error", rejectPending);
+    this.worker.on("exit", code => rejectPending(new Error(`Prettier worker exited (${code}).`)));
+    this.worker.on("message", ({ type, id, payload }) => {
       const resolver = this.messageResolvers.get(id);
       if (resolver) {
         this.messageResolvers.delete(id);
@@ -57,11 +91,12 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
   }
 
   public async import(): Promise</* version of imported prettier */ string> {
+    if (this.stoppedError) throw this.stoppedError;
     const callId = currentCallId++;
     const promise = new Promise((resolve, reject) => {
       this.messageResolvers.set(callId, { resolve, reject });
     });
-    worker.postMessage({
+    this.worker.postMessage({
       type: "import",
       id: callId,
       payload: { modulePath: this.modulePath },
@@ -119,11 +154,12 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
   }
 
   private callMethod(methodName: string, methodArgs: unknown[]): Promise<any> {
+    if (this.stoppedError) return Promise.reject(this.stoppedError);
     const callId = currentCallId++;
     const promise = new Promise((resolve, reject) => {
       this.messageResolvers.set(callId, { resolve, reject });
     });
-    worker.postMessage({
+    this.worker.postMessage({
       type: "callMethod",
       id: callId,
       payload: {
@@ -134,4 +170,4 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
     });
     return promise;
   }
-};
+}

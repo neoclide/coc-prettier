@@ -18,7 +18,7 @@ import {
 import { loadNodeModule, resolveConfigPlugins } from "./ModuleLoader";
 import { PrettierInstance } from "./PrettierInstance";
 import { PrettierMainThreadInstance } from "./PrettierMainThreadInstance";
-import { PrettierWorkerInstance } from "./PrettierWorkerInstance";
+import { disposeWorker, PrettierWorkerInstance } from "./PrettierWorkerInstance";
 import {
   ModuleResolverInterface,
   PackageManagers,
@@ -29,6 +29,7 @@ import {
 import { getConfig, getWorkspaceRelativePath, isAboveV3 } from "./util";
 
 const minPrettierVersion = "1.13.0";
+const moduleCacheDisposeTimeoutMs = 1000;
 
 export type PrettierNodeModule = typeof prettier;
 
@@ -72,6 +73,7 @@ export class ModuleResolver implements ModuleResolverInterface {
   private ignorePathCache = new Map<string, string>();
 
   private path2Module = new Map<string, PrettierInstance>();
+  private disposePromise: Promise<void> | undefined;
 
   constructor(private loggingService: LoggingService) {
     this.findPkgCache = new Map();
@@ -130,6 +132,7 @@ export class ModuleResolver implements ModuleResolverInterface {
   public async getPrettierInstance(
     fileName: string,
   ): Promise<PrettierNodeModule | PrettierInstance | undefined> {
+    if (this.disposePromise) return undefined;
     // if (!workspace.isTrusted) {
     //   this.loggingService.logDebug(UNTRUSTED_WORKSPACE_USING_BUNDLED_PRETTIER);
     //   return prettier;
@@ -178,6 +181,7 @@ export class ModuleResolver implements ModuleResolverInterface {
       const packageManager = (await commands.executeCommand<
         "npm" | "pnpm" | "yarn"
       >("npm.packageManager", workspaceFolder))!;
+      if (this.disposePromise) return undefined;
       const resolvedGlobalPackageManagerPath = globalPathGet(packageManager);
       if (resolvedGlobalPackageManagerPath) {
         const globalModulePath = path.join(
@@ -195,7 +199,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     if (modulePath !== undefined) {
       this.loggingService.logDebug(`Local prettier module path: ${modulePath}`);
       // First check module cache
-      moduleInstance = this.path2Module.get(modulePath);
+      moduleInstance = this.getCachedModule(modulePath);
       if (moduleInstance) {
         return moduleInstance;
       } else {
@@ -228,6 +232,7 @@ export class ModuleResolver implements ModuleResolverInterface {
 
     if (moduleInstance) {
       const version = await moduleInstance.import();
+      if (this.disposePromise) return undefined;
 
       if (!version && prettierPath) {
         this.loggingService.logError(INVALID_PRETTIER_PATH_MESSAGE);
@@ -422,17 +427,47 @@ export class ModuleResolver implements ModuleResolverInterface {
   /**
    * Clears the module and config cache
    */
-  public async dispose() {
-    await require('prettier').clearConfigCache()
-    this.path2Module.forEach((module) => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        module.clearConfigCache();
-      } catch (error) {
-        this.loggingService.logError("Error clearing module cache.", error);
-      }
-    });
-    this.path2Module.clear();
+  public async clearModuleCache(): Promise<void> {
+    this.ignorePathCache.clear();
+    this.findPkgCache.clear();
+    await require('prettier').clearConfigCache();
+    await Promise.all([...this.path2Module.keys()].map(modulePath =>
+      this.getCachedModule(modulePath)?.clearConfigCache()));
+  }
+
+  private getCachedModule(modulePath: string): PrettierInstance | undefined {
+    const instance = this.path2Module.get(modulePath);
+    if (instance instanceof PrettierWorkerInstance && instance.isStopped) {
+      this.path2Module.delete(modulePath);
+      return undefined;
+    }
+    return instance;
+  }
+
+  public dispose(): Promise<void> {
+    if (!this.disposePromise) {
+      this.disposePromise = disposeWorker(async () => {
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            this.clearModuleCache(),
+            new Promise<void>((_, reject) => {
+              timeout = setTimeout(() => reject(new Error(
+                "Timed out clearing Prettier module cache during disposal."
+              )), moduleCacheDisposeTimeoutMs);
+            }),
+          ]);
+        } catch (error) {
+          this.loggingService.logError("Error clearing module cache.", error);
+        } finally {
+          if (timeout) clearTimeout(timeout);
+          this.path2Module.clear();
+        }
+      }).catch(error => {
+        this.loggingService.logError("Error stopping Prettier worker.", error);
+      });
+    }
+    return this.disposePromise;
   }
 
   private isInternalTestRoot(dir: string): boolean {

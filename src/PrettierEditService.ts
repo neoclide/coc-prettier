@@ -46,10 +46,16 @@ const PRETTIER_CONFIG_FILES = [
   ".prettierrc.js",
   ".prettierrc.cjs",
   ".prettierrc.mjs",
+  ".prettierrc.ts",
+  ".prettierrc.cts",
+  ".prettierrc.mts",
   "package.json",
   "prettier.config.js",
   "prettier.config.cjs",
   "prettier.config.mjs",
+  "prettier.config.ts",
+  "prettier.config.cts",
+  "prettier.config.mts",
   ".editorconfig",
 ];
 
@@ -98,6 +104,11 @@ export default class PrettierEditService implements Disposable {
     prettierConfigWatcher.onDidCreate(this.prettierConfigChanged);
     prettierConfigWatcher.onDidDelete(this.prettierConfigChanged);
 
+    const prettierIgnoreWatcher = workspace.createFileSystemWatcher("**/.prettierignore");
+    prettierIgnoreWatcher.onDidChange(this.prettierConfigChanged);
+    prettierIgnoreWatcher.onDidCreate(this.prettierConfigChanged);
+    prettierIgnoreWatcher.onDidDelete(this.prettierConfigChanged);
+
     const textEditorChange = window.onDidChangeActiveTextEditor(
       this.handleActiveTextEditorChangedSync
     );
@@ -108,6 +119,7 @@ export default class PrettierEditService implements Disposable {
       packageWatcher,
       configurationWatcher,
       prettierConfigWatcher,
+      prettierIgnoreWatcher,
       textEditorChange,
     ];
   }
@@ -136,7 +148,15 @@ export default class PrettierEditService implements Disposable {
     }
   };
 
-  private prettierConfigChanged = async (uri: Uri) => this.resetFormatters(uri);
+  private prettierConfigChanged = async (uri: Uri) => {
+    try {
+      await this.moduleResolver.clearModuleCache();
+    } catch (error) {
+      this.loggingService.logError("Error clearing Prettier config cache.", error);
+    } finally {
+      this.resetFormatters(uri);
+    }
+  };
 
   private resetFormatters = (uri?: Uri) => {
     if (uri) {
@@ -237,6 +257,10 @@ export default class PrettierEditService implements Disposable {
 
   public dispose = () => {
     this.moduleResolver.dispose();
+    this.disposeFormatters();
+  };
+
+  private disposeFormatters = () => {
     this.formatterHandler?.dispose();
     this.rangeFormatterHandler?.dispose();
     this.formatterHandler = undefined;
@@ -247,7 +271,7 @@ export default class PrettierEditService implements Disposable {
     languageSelector,
     rangeLanguageSelector,
   }: ISelectors) {
-    this.dispose();
+    this.disposeFormatters();
     const editProvider = new PrettierEditProvider(this.provideEdits);
     this.rangeFormatterHandler =
       languages.registerDocumentRangeFormatProvider(
@@ -377,11 +401,12 @@ export default class PrettierEditService implements Disposable {
     const duration = new Date().getTime() - startTime;
     this.loggingService.logInfo(`Formatting completed in ${duration}ms.`);
     const edit = this.minimalEdit(document, result);
-    return [edit];
+    return edit ? [edit] : [];
   };
 
-  private minimalEdit(document: TextDocument, string1: string) {
+  private minimalEdit(document: TextDocument, string1: string): TextEdit | null {
     const string0 = document.getText();
+    if (string0 === string1) return null;
     // length of common prefix
     let i = 0;
     while (

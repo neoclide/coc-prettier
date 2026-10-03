@@ -20,7 +20,8 @@
     "url": "https://github.com/neoclide/coc-prettier/issues"
   },
   "scripts": {
-    "prepare": "node esbuild.js"
+    "prepare": "node esbuild.js",
+    "test": "node --test test/*.test.cjs"
   },
   "activationEvents": [
     "*"
