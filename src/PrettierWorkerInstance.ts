@@ -31,10 +31,15 @@ function getWorker(): Worker {
   return worker;
 }
 
-export async function disposeWorker(): Promise<void> {
+export async function disposeWorker(beforeTerminate?: () => Promise<void>): Promise<void> {
   const current = worker;
+  // Detach before awaiting cleanup so the next activation gets a fresh worker.
   worker = undefined;
-  if (current) await current.terminate();
+  try {
+    if (beforeTerminate) await beforeTerminate();
+  } finally {
+    if (current) await current.terminate();
+  }
 }
 
 export const PrettierWorkerInstance: PrettierInstanceConstructor = class PrettierWorkerInstance

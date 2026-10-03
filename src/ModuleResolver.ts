@@ -72,6 +72,7 @@ export class ModuleResolver implements ModuleResolverInterface {
   private ignorePathCache = new Map<string, string>();
 
   private path2Module = new Map<string, PrettierInstance>();
+  private disposePromise: Promise<void> | undefined;
 
   constructor(private loggingService: LoggingService) {
     this.findPkgCache = new Map();
@@ -429,19 +430,21 @@ export class ModuleResolver implements ModuleResolverInterface {
     await Promise.all([...this.path2Module.values()].map(module => module.clearConfigCache()));
   }
 
-  public async dispose() {
-    try {
-      await this.clearModuleCache();
-    } catch (error) {
-      this.loggingService.logError("Error clearing module cache.", error);
-    } finally {
-      this.path2Module.clear();
-      try {
-        await disposeWorker();
-      } catch (error) {
+  public dispose(): Promise<void> {
+    if (!this.disposePromise) {
+      this.disposePromise = disposeWorker(async () => {
+        try {
+          await this.clearModuleCache();
+        } catch (error) {
+          this.loggingService.logError("Error clearing module cache.", error);
+        } finally {
+          this.path2Module.clear();
+        }
+      }).catch(error => {
         this.loggingService.logError("Error stopping Prettier worker.", error);
-      }
+      });
     }
+    return this.disposePromise;
   }
 
   private isInternalTestRoot(dir: string): boolean {

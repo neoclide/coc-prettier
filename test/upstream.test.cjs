@@ -209,3 +209,91 @@ test('worker errors reject pending calls and unexpected exit permits restart', a
   assert.equal(workers.length, 2);
   await disposeWorker();
 });
+
+test('overlapping resolver disposal preserves the replacement resolver worker and cached instance', async () => {
+  const { EventEmitter } = require('node:events');
+  const workers = [];
+  let releaseCache;
+  let cacheStarted;
+  const cachePending = new Promise(resolve => { releaseCache = resolve; });
+  const cacheClearing = new Promise(resolve => { cacheStarted = resolve; });
+  class Worker extends EventEmitter {
+    constructor() { super(); this.stops = 0; workers.push(this); }
+    postMessage({ type, id, payload }) {
+      const reply = result => this.emit('message', { type, id, payload: result });
+      if (type === 'import') {
+        queueMicrotask(() => reply({ version: '3.1.1' }));
+      } else if (payload.methodName === 'clearConfigCache' && this === workers[0]) {
+        cacheStarted();
+        cachePending.then(() => reply({ result: undefined }));
+      } else {
+        queueMicrotask(() => reply({ result: payload.methodName === 'format' ? 'formatted\n' : undefined }));
+      }
+    }
+    async terminate() { this.stops++; this.emit('exit', 1); return 1; }
+  }
+  const modulePath = require.resolve('prettier');
+  const fileName = path.join(__dirname, 'fixture.js');
+  const coc = {
+    Uri: { file: fsPath => ({ fsPath }), parse: uri => ({ fsPath: uri }) },
+    workspace: {
+      workspaceFolders: [{ uri: __dirname }],
+      getWorkspaceFolder: () => ({ uri: __dirname }),
+      getConfiguration: () => ({ prettierPath: modulePath }),
+    },
+  };
+  const errors = [];
+  const { ModuleResolver } = load('ModuleResolver.ts', coc, {
+    worker_threads: { Worker },
+    prettier: { clearConfigCache: async () => {} },
+  });
+  const logger = { logDebug() {}, logInfo() {}, logError: (...args) => errors.push(args) };
+  const previous = new ModuleResolver(logger);
+  const replacement = new ModuleResolver(logger);
+  await previous.getPrettierInstance(fileName);
+  const disposing = previous.dispose();
+  try {
+    await cacheClearing;
+    assert.equal(workers[0].stops, 0, 'cache cleanup precedes termination');
+    const instance = await replacement.getPrettierInstance(fileName);
+    assert.equal(await instance.format('before'), 'formatted\n');
+    assert.equal(previous.dispose(), disposing, 'overlapping disposal reuses the pending cleanup');
+    releaseCache();
+    await disposing;
+    assert.equal(workers[0].stops, 1);
+    assert.equal(await replacement.getPrettierInstance(fileName), instance, 'the cached instance remains usable');
+    assert.equal(await instance.format('after'), 'formatted\n');
+    await previous.dispose();
+    assert.equal(await instance.format('after repeated old disposal'), 'formatted\n');
+    assert.equal(workers.length, 2);
+    assert.equal(workers[1].stops, 0);
+    assert.equal(errors.length, 0);
+  } finally {
+    releaseCache();
+    await disposing;
+    await replacement.dispose();
+  }
+  assert.equal(workers[1].stops, 1);
+});
+
+test('cleanup without an existing worker does not terminate a worker started later', async () => {
+  const { EventEmitter } = require('node:events');
+  let stops = 0;
+  class Worker extends EventEmitter {
+    postMessage({ type, id }) {
+      queueMicrotask(() => this.emit('message', { type, id, payload: { result: 'formatted\n' } }));
+    }
+    async terminate() { stops++; this.emit('exit', 1); return 1; }
+  }
+  const { PrettierWorkerInstance, disposeWorker } = load('PrettierWorkerInstance.ts', {}, { worker_threads: { Worker } });
+  let releaseCache;
+  const cachePending = new Promise(resolve => { releaseCache = resolve; });
+  const disposing = disposeWorker(() => cachePending);
+  const instance = new PrettierWorkerInstance('/replacement');
+  releaseCache();
+  await disposing;
+  assert.equal(stops, 0);
+  assert.equal(await instance.format('after'), 'formatted\n');
+  await disposeWorker();
+  assert.equal(stops, 1);
+});
