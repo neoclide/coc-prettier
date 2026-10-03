@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { commands, TextDocument, Uri, workspace } from "coc.nvim";
+import { TextDocument, Uri, workspace } from "coc.nvim";
 import * as findUp from "find-up";
 import * as fs from "fs";
 import * as path from "path";
@@ -138,7 +138,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     //   return prettier;
     // }
 
-    const { prettierPath, resolveGlobalModules, onlyUseLocalVersion } = getConfig(
+    const { prettierPath, resolveGlobalModules, onlyUseLocalVersion, packageManager } = getConfig(
       Uri.file(fileName),
     );
 
@@ -173,15 +173,6 @@ export class ModuleResolver implements ModuleResolverInterface {
 
     // If global modules allowed, look for global module
     if (resolveGlobalModules && !modulePath) {
-      let workspaceFolder;
-      if (workspace.workspaceFolders) {
-        const folder = workspace.getWorkspaceFolder(Uri.file(fileName));
-        if (folder) workspaceFolder = folder.uri;
-      }
-      const packageManager = (await commands.executeCommand<
-        "npm" | "pnpm" | "yarn"
-      >("npm.packageManager", workspaceFolder))!;
-      if (this.disposePromise) return undefined;
       const resolvedGlobalPackageManagerPath = globalPathGet(packageManager);
       if (resolvedGlobalPackageManagerPath) {
         const globalModulePath = path.join(

@@ -71,7 +71,7 @@
         "prettier.resolveGlobalModules": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "When enabled, this extension will attempt to use global npm or yarn modules if local modules cannot be resolved.\n> _This setting can have a negative performance impact, particularly on Windows when you have attached network drives. Only enable this if you must use global modules._",
+          "markdownDescription": "When enabled, this extension will attempt to use global npm, yarn, or pnpm modules if local modules cannot be resolved, using prettier.packageManager.\n> _This setting can have a negative performance impact, particularly on Windows when you have attached network drives. Only enable this if you must use global modules._",
           "scope": "resource"
         },
         "prettier.withNodeModules": {
@@ -89,8 +89,7 @@
             "pnpm"
           ],
           "default": "npm",
-          "deprecationMessage": "Package manager is now automatically detected by coc-prettier. This setting is no longer used.",
-          "markdownDescription": "The package manager you use to install node modules."
+          "markdownDescription": "The package manager used to resolve global Prettier modules when prettier.resolveGlobalModules is enabled."
         },
         "prettier.useEditorConfig": {
           "type": "boolean",

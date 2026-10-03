@@ -13,7 +13,7 @@ function load(entry, coc = {}, mocks = {}) {
   return module.exports;
 }
 
-function setup() {
+function setup(config = {}) {
   const watchers = [];
   let clears = 0;
   const coc = {
@@ -29,6 +29,7 @@ function setup() {
       },
       onDidChangeConfiguration: () => ({ dispose() {} }),
       getWorkspaceFolder: () => ({ uri: '/workspace' }),
+      getConfiguration: () => config,
     },
     languages: {
       registerDocumentRangeFormatProvider: () => ({ dispose() {} }),
@@ -39,12 +40,61 @@ function setup() {
   const Service = load('PrettierEditService.ts', coc).default;
   const service = new Service({ clearModuleCache: async () => { clears++; } },
     { logInfo() {}, logDebug() {}, logError() {} }, { update() {}, hide() {} }, 9);
-  return { service, watchers, getClears: () => clears };
+  return { service, watchers, coc, getClears: () => clears };
 }
 
 function document(text) {
-  return { getText: () => text, positionAt: offset => ({ line: 0, character: offset }) };
+  return { uri: '/workspace/index.ts', languageId: 'typescript',
+    getText: () => text, positionAt: offset => ({ line: 0, character: offset }) };
 }
+
+test('onlyUseLocalVersion formats with a resolved local Prettier instance', async () => {
+  const { service } = setup({ onlyUseLocalVersion: true });
+  service.moduleResolver.getResolvedConfig = async () => ({ semi: false });
+  service.moduleResolver.getPrettierInstance = async () => require('prettier');
+  const source = 'const x=1;\n';
+  const edits = await service.provideEdits(document(source), { force: true });
+  assert.equal(edits.length, 1);
+  const edit = edits[0];
+  assert.equal(source.slice(0, edit.range.start.character) + edit.newText +
+    source.slice(edit.range.end.character), 'const x = 1\n');
+});
+
+test('onlyUseLocalVersion never falls back to bundled Prettier without a local instance', async () => {
+  const { resolver, workers, fileName } = setupModuleResolver({ config: { onlyUseLocalVersion: true } });
+  resolver.findPkg = () => undefined;
+  try {
+    assert.equal(await resolver.getPrettierInstance(fileName), undefined);
+    assert.equal(workers.length, 0);
+    const { service } = setup({ onlyUseLocalVersion: true });
+    service.moduleResolver.getResolvedConfig = async () => null;
+    service.moduleResolver.getPrettierInstance = async () => resolver.getPrettierInstance(fileName);
+    assert.equal((await service.provideEdits(document('const x=1;\n'), { force: true })).length, 0);
+  } finally {
+    await resolver.dispose();
+  }
+});
+
+test('forced formatting synchronizes pending buffer changes before computing edits', async () => {
+  const { service, coc } = setup();
+  let source = 'let x = 1;\n';
+  let applied = 0;
+  const doc = {
+    get textDocument() { return document(source); },
+    async patchChange() { source = 'let x=2;\n'; },
+    async applyEdits(edits) {
+      applied++;
+      const edit = edits[0];
+      source = source.slice(0, edit.range.start.character) + edit.newText + source.slice(edit.range.end.character);
+    },
+  };
+  coc.window.activeTextEditor = { document: doc };
+  service.moduleResolver.getResolvedConfig = async () => null;
+  service.moduleResolver.getPrettierInstance = async () => require('prettier');
+  await service.forceFormatDocument();
+  assert.equal(applied, 1);
+  assert.equal(source, 'let x = 2;\n');
+});
 
 test('already formatted LF and CRLF documents return no edits, including forced formatting', async () => {
   const { service } = setup();
@@ -64,6 +114,16 @@ test('changed documents still receive a minimal edit', async () => {
   assert.equal('let x=1;\n'.slice(0, edit.range.start.character) + edit.newText +
     'let x=1;\n'.slice(edit.range.end.character), 'let x = 1;\n');
 });
+
+for (const rangeStart of [0, 2]) {
+  test(`range formatting preserves unselected code when rangeStart is ${rangeStart}`, async () => {
+    const { service } = setup();
+    const source = 'let x=1;\nlet y=2;\n';
+    const options = service.getPrettierOptions('/workspace/index.ts', 'typescript', {}, null,
+      { force: false, rangeStart, rangeEnd: 8 });
+    assert.equal(await require('prettier').format(source, options), 'let x = 1;\nlet y=2;\n');
+  });
+}
 
 test('ignore and TypeScript config changes clear cache and all watchers are disposable', async () => {
   const { service, watchers, getClears } = setup();
@@ -384,20 +444,25 @@ test('disposed resolvers do not resurrect stopped workers during or after cleanu
   assert.equal(workers.length, 1);
 });
 
-test('pending global module resolution cannot create a worker after disposal', async () => {
-  let resolvePackageManager;
-  const packageManager = new Promise(resolve => { resolvePackageManager = resolve; });
+test('global module resolution uses the configured package manager without prompting', async () => {
+  const invocations = [];
   const { resolver, workers, fileName } = setupModuleResolver({
-    config: { resolveGlobalModules: true },
-    commands: { executeCommand: () => packageManager },
-    mocks: { child_process: { execSync: () => path.join(__dirname, '..', 'node_modules') } },
+    config: { resolveGlobalModules: true, packageManager: 'pnpm' },
+    commands: { executeCommand: () => assert.fail('must not prompt for a package manager') },
+    mocks: { child_process: { execSync: command => {
+      invocations.push(command);
+      return path.join(__dirname, '..', 'node_modules');
+    } } },
   });
   resolver.findPkg = () => undefined;
-  const resolving = resolver.getPrettierInstance(fileName);
-  await resolver.dispose();
-  resolvePackageManager('pnpm');
-  assert.equal(await resolving, undefined);
-  assert.equal(workers.length, 0);
+  try {
+    const instance = await resolver.getPrettierInstance(fileName);
+    assert.equal(await instance.format('source'), 'formatted\n');
+    assert.deepEqual(invocations, ['pnpm root -g']);
+    assert.equal(workers.length, 1);
+  } finally {
+    await resolver.dispose();
+  }
 });
 
 test('Prettier 2 instances remain cached and usable across cache clearing', async () => {

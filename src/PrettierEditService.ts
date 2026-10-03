@@ -138,6 +138,8 @@ export default class PrettierEditService implements Disposable {
         "Forced formatting will not use ignore files."
       );
 
+      // Coc's buffer synchronization method is not exposed in its public types.
+      await (editor.document as any).patchChange();
       const edits = await this.provideEdits(editor.document.textDocument, { force: true });
       if (edits.length !== 1) {
         return;
@@ -468,9 +470,6 @@ export default class PrettierEditService implements Disposable {
     );
     this.loggingService.logInfo("PrettierInstance:", prettierInstance);
 
-    if (vscodeConfig.onlyUseLocalVersion) {
-      return;
-    }
     if (!prettierInstance) {
       this.loggingService.logError(
         "Prettier could not be loaded. See previous logs for more information."
@@ -606,8 +605,8 @@ export default class PrettierEditService implements Disposable {
 
     let rangeFormattingOptions: RangeFormattingOptions | undefined;
     if (
-      extensionFormattingOptions.rangeEnd &&
-      extensionFormattingOptions.rangeStart
+      extensionFormattingOptions.rangeEnd !== undefined &&
+      extensionFormattingOptions.rangeStart !== undefined
     ) {
       rangeFormattingOptions = {
         rangeEnd: extensionFormattingOptions.rangeEnd,
