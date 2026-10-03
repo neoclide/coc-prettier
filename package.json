@@ -21,7 +21,9 @@
   },
   "scripts": {
     "prepare": "node esbuild.js",
-    "test": "node --test test/*.test.cjs"
+    "test": "node --test test/*.test.cjs",
+    "build": "node esbuild.js",
+    "lint": "tsc --noEmit"
   },
   "activationEvents": [
     "*"
@@ -318,19 +320,20 @@
   "license": "MIT",
   "devDependencies": {
     "@chemzqm/tsconfig": "^0.0.3",
-    "@types/node": "^16.18",
+    "@types/node": "^20.19.43",
     "@types/semver": "^7.3.9",
     "@types/prettier": "^2.7.2",
-    "coc.nvim": "0.0.83-next.19",
-    "esbuild": "^0.25.0",
+    "coc.nvim": "^0.0.83-next.25",
+    "esbuild": "^0.28.2",
     "find-up": "^5.0.0",
     "ignore": "^5.2.0",
     "resolve": "^1.22.8",
     "rimraf": "^3.0.2",
     "semver": "^7.6.3",
-    "typescript": "^5.7.3"
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "prettier": "^3.1.1"
-  }
+  },
+  "packageManager": "npm@11.9.0"
 }

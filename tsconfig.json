@@ -3,8 +3,8 @@
   "compilerOptions": {
     "outDir": "lib",
     "target": "es2017",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "declaration": false,
     "lib": ["ES2020"],
     "plugins": []
