@@ -161,3 +161,51 @@ test('config cache failures still invalidate formatter registration', async () =
   assert.equal(errors.length, 1);
   assert.equal(errors[0][1].message, 'cache failure');
 });
+
+
+test('worker termination rejects pending calls and permits a fresh worker', async () => {
+  const { EventEmitter } = require('node:events');
+  const workers = [];
+  class Worker extends EventEmitter {
+    constructor() { super(); workers.push(this); }
+    postMessage(message) { this.lastMessage = message; }
+    async terminate() { this.emit('exit', 1); return 1; }
+  }
+  const { PrettierWorkerInstance, disposeWorker } = load('PrettierWorkerInstance.ts', {}, { worker_threads: { Worker } });
+  const first = new PrettierWorkerInstance('/first');
+  const second = new PrettierWorkerInstance('/second');
+  const pending = [first.import(), first.format('source'), second.resolveConfig('/file')];
+  const rejected = pending.map(promise => assert.rejects(promise, /Prettier worker exited/));
+  await disposeWorker();
+  await Promise.all(rejected);
+  assert.equal(first.messageResolvers.size, 0);
+  assert.equal(second.messageResolvers.size, 0);
+  await assert.rejects(first.format('later'), /Prettier worker exited/);
+  await assert.rejects(first.import(), /Prettier worker exited/);
+  const third = new PrettierWorkerInstance('/third');
+  assert.equal(workers.length, 2);
+  const formatted = third.format('new');
+  workers[1].emit('message', { type: 'callMethod', id: workers[1].lastMessage.id, payload: { result: 'new\n' } });
+  assert.equal(await formatted, 'new\n');
+  await disposeWorker();
+});
+
+test('worker errors reject pending calls and unexpected exit permits restart', async () => {
+  const { EventEmitter } = require('node:events');
+  const workers = [];
+  class Worker extends EventEmitter {
+    constructor() { super(); workers.push(this); }
+    postMessage() {}
+    async terminate() { this.emit('exit', 1); }
+  }
+  const { PrettierWorkerInstance, disposeWorker } = load('PrettierWorkerInstance.ts', {}, { worker_threads: { Worker } });
+  const instance = new PrettierWorkerInstance('/first');
+  const rejected = assert.rejects(instance.clearConfigCache(), /worker failed/);
+  workers[0].emit('error', new Error('worker failed'));
+  await rejected;
+  assert.equal(instance.messageResolvers.size, 0);
+  workers[0].emit('exit', 1);
+  new PrettierWorkerInstance('/second');
+  assert.equal(workers.length, 2);
+  await disposeWorker();
+});
