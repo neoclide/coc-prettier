@@ -138,6 +138,8 @@ export default class PrettierEditService implements Disposable {
         "Forced formatting will not use ignore files."
       );
 
+      // Coc's buffer synchronization method is not exposed in its public types.
+      await (editor.document as any).patchChange();
       const edits = await this.provideEdits(editor.document.textDocument, { force: true });
       if (edits.length !== 1) {
         return;

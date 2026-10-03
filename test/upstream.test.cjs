@@ -40,7 +40,7 @@ function setup(config = {}) {
   const Service = load('PrettierEditService.ts', coc).default;
   const service = new Service({ clearModuleCache: async () => { clears++; } },
     { logInfo() {}, logDebug() {}, logError() {} }, { update() {}, hide() {} }, 9);
-  return { service, watchers, getClears: () => clears };
+  return { service, watchers, coc, getClears: () => clears };
 }
 
 function document(text) {
@@ -73,6 +73,27 @@ test('onlyUseLocalVersion never falls back to bundled Prettier without a local i
   } finally {
     await resolver.dispose();
   }
+});
+
+test('forced formatting synchronizes pending buffer changes before computing edits', async () => {
+  const { service, coc } = setup();
+  let source = 'let x = 1;\n';
+  let applied = 0;
+  const doc = {
+    get textDocument() { return document(source); },
+    async patchChange() { source = 'let x=2;\n'; },
+    async applyEdits(edits) {
+      applied++;
+      const edit = edits[0];
+      source = source.slice(0, edit.range.start.character) + edit.newText + source.slice(edit.range.end.character);
+    },
+  };
+  coc.window.activeTextEditor = { document: doc };
+  service.moduleResolver.getResolvedConfig = async () => null;
+  service.moduleResolver.getPrettierInstance = async () => require('prettier');
+  await service.forceFormatDocument();
+  assert.equal(applied, 1);
+  assert.equal(source, 'let x = 2;\n');
 });
 
 test('already formatted LF and CRLF documents return no edits, including forced formatting', async () => {
