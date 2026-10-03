@@ -13,7 +13,7 @@ function load(entry, coc = {}, mocks = {}) {
   return module.exports;
 }
 
-function setup() {
+function setup(config = {}) {
   const watchers = [];
   let clears = 0;
   const coc = {
@@ -29,6 +29,7 @@ function setup() {
       },
       onDidChangeConfiguration: () => ({ dispose() {} }),
       getWorkspaceFolder: () => ({ uri: '/workspace' }),
+      getConfiguration: () => config,
     },
     languages: {
       registerDocumentRangeFormatProvider: () => ({ dispose() {} }),
@@ -43,8 +44,36 @@ function setup() {
 }
 
 function document(text) {
-  return { getText: () => text, positionAt: offset => ({ line: 0, character: offset }) };
+  return { uri: '/workspace/index.ts', languageId: 'typescript',
+    getText: () => text, positionAt: offset => ({ line: 0, character: offset }) };
 }
+
+test('onlyUseLocalVersion formats with a resolved local Prettier instance', async () => {
+  const { service } = setup({ onlyUseLocalVersion: true });
+  service.moduleResolver.getResolvedConfig = async () => ({ semi: false });
+  service.moduleResolver.getPrettierInstance = async () => require('prettier');
+  const source = 'const x=1;\n';
+  const edits = await service.provideEdits(document(source), { force: true });
+  assert.equal(edits.length, 1);
+  const edit = edits[0];
+  assert.equal(source.slice(0, edit.range.start.character) + edit.newText +
+    source.slice(edit.range.end.character), 'const x = 1\n');
+});
+
+test('onlyUseLocalVersion never falls back to bundled Prettier without a local instance', async () => {
+  const { resolver, workers, fileName } = setupModuleResolver({ config: { onlyUseLocalVersion: true } });
+  resolver.findPkg = () => undefined;
+  try {
+    assert.equal(await resolver.getPrettierInstance(fileName), undefined);
+    assert.equal(workers.length, 0);
+    const { service } = setup({ onlyUseLocalVersion: true });
+    service.moduleResolver.getResolvedConfig = async () => null;
+    service.moduleResolver.getPrettierInstance = async () => resolver.getPrettierInstance(fileName);
+    assert.equal((await service.provideEdits(document('const x=1;\n'), { force: true })).length, 0);
+  } finally {
+    await resolver.dispose();
+  }
+});
 
 test('already formatted LF and CRLF documents return no edits, including forced formatting', async () => {
   const { service } = setup();
