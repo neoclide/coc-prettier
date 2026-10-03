@@ -134,7 +134,7 @@ graphql
 handlebars
 ```
 
-### Format On Save.
+### Format On Save
 
 Open settings file with:
 
@@ -142,11 +142,26 @@ Open settings file with:
 
 Add:
 
-```
-  "coc.preferences.formatOnSaveFiletypes": ["css", "markdown"],
+```json
+{
+  "coc.preferences.formatOnSave": true
+}
 ```
 
-to setup the languages which you want to format on save.
+to format on save for every file with a registered formatter. To enable formatting only for selected languages, use language-specific settings:
+
+```json
+{
+  "[css]": {
+    "coc.preferences.formatOnSave": true
+  },
+  "[markdown]": {
+    "coc.preferences.formatOnSave": true
+  }
+}
+```
+
+Existing `coc.preferences.formatOnSaveFiletypes` settings also work and take precedence over `coc.preferences.formatOnSave`.
 
 **Note:** if prettier extension have lower priority, and document have other
 registered document format provider, prettier will be ignored.
@@ -212,7 +227,7 @@ These settings are specific to coc-prettier and need to be set in coc-settings.j
 
 Controls whether prettier is enabled or not. You must restart coc.nvim when you change this setting.
 
-#### prettier.disableLanguages (default: ["vue"])
+#### prettier.disableLanguages (default: `[]`)
 
 A list of languages IDs to disable this extension on. Restart required.
 _Note: Disabling a language enabled in a parent folder will prevent formatting instead of letting any other formatter to run_
@@ -236,6 +251,8 @@ Require a prettier configuration file to format files. Untitled files will still
 
 Supply the path to an ignore file such as `.gitignore` or `.prettierignore`.
 Files which match will not be formatted. Set to `null` to not read ignore files.
+
+Relative paths are resolved from the workspace folder, rather than the directory of the file being formatted. To use an ignore file in a subfolder, open that subfolder as the workspace or set `prettier.ignorePath` to its path relative to the workspace root. Absolute paths are also supported.
 
 **Note, if this is set, this value will always be used and local ignore files will be ignored.**
 
