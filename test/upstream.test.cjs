@@ -146,3 +146,18 @@ test('re-registering formatters does not dispose an active module resolver', () 
   service.registerDocumentFormatEditorProviders({ languageSelector: [], rangeLanguageSelector: [] });
   service.registerDocumentFormatEditorProviders({ languageSelector: [], rangeLanguageSelector: [] });
 });
+
+
+test('config cache failures still invalidate formatter registration', async () => {
+  const { service, watchers } = setup();
+  service.moduleResolver.clearModuleCache = async () => { throw new Error('cache failure'); };
+  service.registeredWorkspaces.add('/workspace');
+  const errors = [];
+  service.loggingService.logError = (...args) => errors.push(args);
+  service.registerDisposables();
+  const config = watchers.find(watcher => watcher.pattern.includes('.prettierrc.ts'));
+  await assert.doesNotReject(config.change({ fsPath: '/workspace/prettier.config.ts' }));
+  assert.equal(service.registeredWorkspaces.has('/workspace'), false);
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0][1].message, 'cache failure');
+});

@@ -151,9 +151,10 @@ export default class PrettierEditService implements Disposable {
   private prettierConfigChanged = async (uri: Uri) => {
     try {
       await this.moduleResolver.clearModuleCache();
-      this.resetFormatters(uri);
     } catch (error) {
       this.loggingService.logError("Error clearing Prettier config cache.", error);
+    } finally {
+      this.resetFormatters(uri);
     }
   };
 
