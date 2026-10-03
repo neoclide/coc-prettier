@@ -297,3 +297,121 @@ test('cleanup without an existing worker does not terminate a worker started lat
   await disposeWorker();
   assert.equal(stops, 1);
 });
+
+function setupModuleResolver({ config = {}, commands = {}, mocks = {} } = {}) {
+  const { EventEmitter } = require('node:events');
+  const workers = [];
+  class Worker extends EventEmitter {
+    constructor() { super(); workers.push(this); }
+    postMessage({ type, id, payload }) {
+      if (payload.methodName === 'format' && payload.methodArgs[0] === 'pending') return;
+      queueMicrotask(() => this.emit('message', { type, id, payload: type === 'import'
+        ? { version: '3.1.1' } : { result: payload.methodName === 'format' ? 'formatted\n' : undefined } }));
+    }
+    async terminate() { this.emit('exit', 1); return 1; }
+  }
+  const coc = {
+    commands,
+    Uri: { file: fsPath => ({ fsPath }), parse: uri => ({ fsPath: uri }) },
+    workspace: {
+      workspaceFolders: [{ uri: __dirname }],
+      getWorkspaceFolder: () => ({ uri: __dirname }),
+      getConfiguration: () => config,
+    },
+  };
+  const { ModuleResolver } = load('ModuleResolver.ts', coc, {
+    worker_threads: { Worker }, prettier: { clearConfigCache: async () => {} }, ...mocks,
+  });
+  const errors = [];
+  const resolver = new ModuleResolver({ logDebug() {}, logInfo() {}, logError: (...args) => errors.push(args) });
+  const modulePath = require.resolve('prettier');
+  const fileName = path.join(__dirname, 'fixture.js');
+  resolver.findPkgCache.set(`${fileName}:prettier`, modulePath);
+  return { resolver, workers, errors, modulePath, fileName };
+}
+
+for (const event of ['exit', 'error']) {
+  test(`resolver replaces a stopped cached worker instance after ${event}`, async () => {
+    const { resolver, workers, modulePath, fileName } = setupModuleResolver();
+    try {
+      const stopped = await resolver.getPrettierInstance(fileName);
+      assert.equal(await stopped.format('before'), 'formatted\n');
+      const rejected = assert.rejects(stopped.format('pending'), /worker (exited|failed)/);
+      workers[0].emit(event, event === 'exit' ? 1 : new Error('worker failed'));
+      await rejected;
+      const replacement = await resolver.getPrettierInstance(fileName);
+      assert.notEqual(replacement, stopped);
+      assert.equal(resolver.findPkgCache.get(`${fileName}:prettier`), modulePath);
+      assert.equal(workers.length, 2);
+      assert.equal(await replacement.format('after'), 'formatted\n');
+      // An error can be followed by exit after the replacement is already active.
+      if (event === 'error') workers[0].emit('exit', 1);
+      assert.equal(await resolver.getPrettierInstance(fileName), replacement);
+      assert.equal(await replacement.format('cached'), 'formatted\n');
+    } finally {
+      await resolver.dispose();
+    }
+  });
+}
+
+test('cache cleanup evicts stopped worker instances without recreating them', async () => {
+  const { resolver, workers, fileName } = setupModuleResolver();
+  await resolver.getPrettierInstance(fileName);
+  workers[0].emit('exit', 1);
+  await assert.doesNotReject(resolver.clearModuleCache());
+  assert.equal(resolver.path2Module.size, 0);
+  assert.equal(workers.length, 1);
+  await resolver.dispose();
+});
+
+test('disposed resolvers do not resurrect stopped workers during or after cleanup', async () => {
+  let releaseCache;
+  const cachePending = new Promise(resolve => { releaseCache = resolve; });
+  const { resolver, workers, fileName } = setupModuleResolver({
+    mocks: { prettier: { clearConfigCache: () => cachePending } },
+  });
+  await resolver.getPrettierInstance(fileName);
+  workers[0].emit('exit', 1);
+  const disposing = resolver.dispose();
+  try {
+    assert.equal(await resolver.getPrettierInstance(fileName), undefined);
+    assert.equal(workers.length, 1);
+  } finally {
+    releaseCache();
+    await disposing;
+  }
+  assert.equal(await resolver.getPrettierInstance(fileName), undefined);
+  assert.equal(workers.length, 1);
+});
+
+test('pending global module resolution cannot create a worker after disposal', async () => {
+  let resolvePackageManager;
+  const packageManager = new Promise(resolve => { resolvePackageManager = resolve; });
+  const { resolver, workers, fileName } = setupModuleResolver({
+    config: { resolveGlobalModules: true },
+    commands: { executeCommand: () => packageManager },
+    mocks: { child_process: { execSync: () => path.join(__dirname, '..', 'node_modules') } },
+  });
+  resolver.findPkg = () => undefined;
+  const resolving = resolver.getPrettierInstance(fileName);
+  await resolver.dispose();
+  resolvePackageManager('pnpm');
+  assert.equal(await resolving, undefined);
+  assert.equal(workers.length, 0);
+});
+
+test('Prettier 2 instances remain cached and usable across cache clearing', async () => {
+  const modulePath = require.resolve('prettier');
+  let clears = 0;
+  const prettier = { version: '2.8.8', format: () => 'prettier2\n', clearConfigCache: () => { clears++; } };
+  const { resolver, workers, fileName } = setupModuleResolver({
+    mocks: { [modulePath]: prettier, [require.resolve('prettier/package.json')]: { version: '2.8.8' } },
+  });
+  const instance = await resolver.getPrettierInstance(fileName);
+  await resolver.clearModuleCache();
+  assert.equal(await resolver.getPrettierInstance(fileName), instance);
+  assert.equal(await instance.format('source'), 'prettier2\n');
+  assert.equal(clears, 1);
+  assert.equal(workers.length, 0);
+  await resolver.dispose();
+});

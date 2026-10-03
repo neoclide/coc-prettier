@@ -131,6 +131,7 @@ export class ModuleResolver implements ModuleResolverInterface {
   public async getPrettierInstance(
     fileName: string,
   ): Promise<PrettierNodeModule | PrettierInstance | undefined> {
+    if (this.disposePromise) return undefined;
     // if (!workspace.isTrusted) {
     //   this.loggingService.logDebug(UNTRUSTED_WORKSPACE_USING_BUNDLED_PRETTIER);
     //   return prettier;
@@ -179,6 +180,7 @@ export class ModuleResolver implements ModuleResolverInterface {
       const packageManager = (await commands.executeCommand<
         "npm" | "pnpm" | "yarn"
       >("npm.packageManager", workspaceFolder))!;
+      if (this.disposePromise) return undefined;
       const resolvedGlobalPackageManagerPath = globalPathGet(packageManager);
       if (resolvedGlobalPackageManagerPath) {
         const globalModulePath = path.join(
@@ -196,7 +198,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     if (modulePath !== undefined) {
       this.loggingService.logDebug(`Local prettier module path: ${modulePath}`);
       // First check module cache
-      moduleInstance = this.path2Module.get(modulePath);
+      moduleInstance = this.getCachedModule(modulePath);
       if (moduleInstance) {
         return moduleInstance;
       } else {
@@ -229,6 +231,7 @@ export class ModuleResolver implements ModuleResolverInterface {
 
     if (moduleInstance) {
       const version = await moduleInstance.import();
+      if (this.disposePromise) return undefined;
 
       if (!version && prettierPath) {
         this.loggingService.logError(INVALID_PRETTIER_PATH_MESSAGE);
@@ -427,7 +430,17 @@ export class ModuleResolver implements ModuleResolverInterface {
     this.ignorePathCache.clear();
     this.findPkgCache.clear();
     await require('prettier').clearConfigCache();
-    await Promise.all([...this.path2Module.values()].map(module => module.clearConfigCache()));
+    await Promise.all([...this.path2Module.keys()].map(modulePath =>
+      this.getCachedModule(modulePath)?.clearConfigCache()));
+  }
+
+  private getCachedModule(modulePath: string): PrettierInstance | undefined {
+    const instance = this.path2Module.get(modulePath);
+    if (instance instanceof PrettierWorkerInstance && instance.isStopped) {
+      this.path2Module.delete(modulePath);
+      return undefined;
+    }
+    return instance;
   }
 
   public dispose(): Promise<void> {

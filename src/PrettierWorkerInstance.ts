@@ -2,10 +2,7 @@ import * as path from "path";
 import { Options, ResolveConfigOptions } from "prettier";
 import * as url from "url";
 import { Worker } from "worker_threads";
-import {
-  PrettierInstance,
-  PrettierInstanceConstructor,
-} from "./PrettierInstance";
+import { PrettierInstance } from "./PrettierInstance";
 import {
   PrettierFileInfoOptions,
   PrettierFileInfoResult,
@@ -42,8 +39,7 @@ export async function disposeWorker(beforeTerminate?: () => Promise<void>): Prom
   }
 }
 
-export const PrettierWorkerInstance: PrettierInstanceConstructor = class PrettierWorkerInstance
-  implements PrettierInstance {
+export class PrettierWorkerInstance implements PrettierInstance {
   private messageResolvers: Map<
     number,
     {
@@ -57,10 +53,15 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
   private worker: Worker;
   private stoppedError: Error | undefined;
 
+  public get isStopped(): boolean {
+    return this.stoppedError !== undefined;
+  }
+
   constructor(private modulePath: string) {
     this.worker = getWorker();
     const rejectPending = (error: Error) => {
       this.stoppedError = error;
+      if (worker === this.worker) worker = undefined;
       for (const resolver of this.messageResolvers.values()) resolver.reject(error);
       this.messageResolvers.clear();
     };
@@ -169,4 +170,4 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
     });
     return promise;
   }
-};
+}
