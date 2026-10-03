@@ -603,8 +603,8 @@ export default class PrettierEditService implements Disposable {
 
     let rangeFormattingOptions: RangeFormattingOptions | undefined;
     if (
-      extensionFormattingOptions.rangeEnd &&
-      extensionFormattingOptions.rangeStart
+      extensionFormattingOptions.rangeEnd !== undefined &&
+      extensionFormattingOptions.rangeStart !== undefined
     ) {
       rangeFormattingOptions = {
         rangeEnd: extensionFormattingOptions.rangeEnd,

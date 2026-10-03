@@ -94,6 +94,16 @@ test('changed documents still receive a minimal edit', async () => {
     'let x=1;\n'.slice(edit.range.end.character), 'let x = 1;\n');
 });
 
+for (const rangeStart of [0, 2]) {
+  test(`range formatting preserves unselected code when rangeStart is ${rangeStart}`, async () => {
+    const { service } = setup();
+    const source = 'let x=1;\nlet y=2;\n';
+    const options = service.getPrettierOptions('/workspace/index.ts', 'typescript', {}, null,
+      { force: false, rangeStart, rangeEnd: 8 });
+    assert.equal(await require('prettier').format(source, options), 'let x = 1;\nlet y=2;\n');
+  });
+}
+
 test('ignore and TypeScript config changes clear cache and all watchers are disposable', async () => {
   const { service, watchers, getClears } = setup();
   const disposables = service.registerDisposables();
