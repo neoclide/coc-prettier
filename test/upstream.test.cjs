@@ -8,7 +8,7 @@ function load(entry, coc = {}, mocks = {}) {
   const output = buildSync({ entryPoints: [path.join(__dirname, '..', 'src', entry)], bundle: true,
     platform: 'node', format: 'cjs', write: false, external: ['coc.nvim', 'prettier'] }).outputFiles[0].text;
   const module = { exports: {} };
-  vm.runInNewContext(output, { module, exports: module.exports, process, console, __dirname, Buffer,
+  vm.runInNewContext(output, { module, exports: module.exports, process, console, __dirname, Buffer, setTimeout, clearTimeout,
     require: id => id === 'coc.nvim' ? coc : mocks[id] || require(id) });
   return module.exports;
 }
@@ -414,4 +414,72 @@ test('Prettier 2 instances remain cached and usable across cache clearing', asyn
   assert.equal(clears, 1);
   assert.equal(workers.length, 0);
   await resolver.dispose();
+});
+
+test('disposal terminates a real worker even when its cache cleanup never settles', async () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const { Worker: RealWorker } = require('node:worker_threads');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'prettier-stuck-cache-'));
+  fs.writeFileSync(path.join(directory, 'package.json'), JSON.stringify({ version: '3.1.1', main: 'index.cjs' }));
+  fs.writeFileSync(path.join(directory, 'index.cjs'), `
+    exports.version = '3.1.1';
+    exports.format = source => source === 'pending' ? new Promise(() => {}) : 'formatted\\n';
+    exports.clearConfigCache = () => new Promise(() => {});
+  `);
+  const workers = [];
+  let terminations = 0;
+  class Worker extends RealWorker {
+    constructor(...args) { super(...args); workers.push(this); }
+    terminate() { terminations++; return super.terminate(); }
+  }
+  const { resolver, errors, fileName } = setupModuleResolver({
+    config: { prettierPath: directory }, mocks: { worker_threads: { Worker } },
+  });
+  let deadline;
+  try {
+    const instance = await resolver.getPrettierInstance(fileName);
+    assert.equal(await instance.format('before'), 'formatted\n');
+    const rejected = assert.rejects(instance.format('pending'), /Prettier worker exited/);
+    const disposed = await Promise.race([
+      resolver.dispose().then(() => true),
+      new Promise(resolve => { deadline = setTimeout(() => resolve(false), 3000); }),
+    ]);
+    assert.equal(disposed, true, 'disposal must not wait indefinitely for worker cache cleanup');
+    await rejected;
+    assert.equal(terminations, 1);
+    assert.equal(resolver.path2Module.size, 0);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0][1].message, /Timed out clearing Prettier module cache/);
+  } finally {
+    clearTimeout(deadline);
+    await Promise.all(workers.map(worker => worker.terminate()));
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('disposal releases cached modules when bundled cleanup stalls and handles its late rejection', async () => {
+  let rejectCache;
+  const cachePending = new Promise((_, reject) => { rejectCache = reject; });
+  const { resolver, fileName, errors } = setupModuleResolver({
+    mocks: { prettier: { clearConfigCache: () => cachePending } },
+  });
+  const instance = await resolver.getPrettierInstance(fileName);
+  let deadline;
+  try {
+    const disposed = await Promise.race([
+      resolver.dispose().then(() => true),
+      new Promise(resolve => { deadline = setTimeout(() => resolve(false), 3000); }),
+    ]);
+    assert.equal(disposed, true);
+    assert.equal(instance.isStopped, true);
+    assert.equal(resolver.path2Module.size, 0);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0][1].message, /Timed out clearing Prettier module cache/);
+    rejectCache(new Error('late cache cleanup rejection'));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(errors.length, 1);
+  } finally {
+    clearTimeout(deadline);
+  }
 });

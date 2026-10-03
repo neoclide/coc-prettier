@@ -29,6 +29,7 @@ import {
 import { getConfig, getWorkspaceRelativePath, isAboveV3 } from "./util";
 
 const minPrettierVersion = "1.13.0";
+const moduleCacheDisposeTimeoutMs = 1000;
 
 export type PrettierNodeModule = typeof prettier;
 
@@ -446,11 +447,20 @@ export class ModuleResolver implements ModuleResolverInterface {
   public dispose(): Promise<void> {
     if (!this.disposePromise) {
       this.disposePromise = disposeWorker(async () => {
+        let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
-          await this.clearModuleCache();
+          await Promise.race([
+            this.clearModuleCache(),
+            new Promise<void>((_, reject) => {
+              timeout = setTimeout(() => reject(new Error(
+                "Timed out clearing Prettier module cache during disposal."
+              )), moduleCacheDisposeTimeoutMs);
+            }),
+          ]);
         } catch (error) {
           this.loggingService.logError("Error clearing module cache.", error);
         } finally {
+          if (timeout) clearTimeout(timeout);
           this.path2Module.clear();
         }
       }).catch(error => {
