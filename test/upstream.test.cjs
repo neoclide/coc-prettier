@@ -444,20 +444,25 @@ test('disposed resolvers do not resurrect stopped workers during or after cleanu
   assert.equal(workers.length, 1);
 });
 
-test('pending global module resolution cannot create a worker after disposal', async () => {
-  let resolvePackageManager;
-  const packageManager = new Promise(resolve => { resolvePackageManager = resolve; });
+test('global module resolution uses the configured package manager without prompting', async () => {
+  const invocations = [];
   const { resolver, workers, fileName } = setupModuleResolver({
-    config: { resolveGlobalModules: true },
-    commands: { executeCommand: () => packageManager },
-    mocks: { child_process: { execSync: () => path.join(__dirname, '..', 'node_modules') } },
+    config: { resolveGlobalModules: true, packageManager: 'pnpm' },
+    commands: { executeCommand: () => assert.fail('must not prompt for a package manager') },
+    mocks: { child_process: { execSync: command => {
+      invocations.push(command);
+      return path.join(__dirname, '..', 'node_modules');
+    } } },
   });
   resolver.findPkg = () => undefined;
-  const resolving = resolver.getPrettierInstance(fileName);
-  await resolver.dispose();
-  resolvePackageManager('pnpm');
-  assert.equal(await resolving, undefined);
-  assert.equal(workers.length, 0);
+  try {
+    const instance = await resolver.getPrettierInstance(fileName);
+    assert.equal(await instance.format('source'), 'formatted\n');
+    assert.deepEqual(invocations, ['pnpm root -g']);
+    assert.equal(workers.length, 1);
+  } finally {
+    await resolver.dispose();
+  }
 });
 
 test('Prettier 2 instances remain cached and usable across cache clearing', async () => {

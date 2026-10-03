@@ -257,13 +257,17 @@ Supply a custom path to the prettier module. This path should be to the module f
 
 #### prettier.resolveGlobalModules (default: `false`)
 
-When enabled, this extension will attempt to use global npm or yarn modules if local modules cannot be resolved.
+When enabled, this extension will attempt to use global npm, yarn, or pnpm modules if local modules cannot be resolved. Set `prettier.packageManager` to the package manager used for your global installation.
 
 > NOTE: This setting can have a negative performance impact, particularly on Windows when you have attached network drives. Only enable this if you must use global modules. It is recommended that you always use local modules when possible.
 
 **Note: Disabling a language enabled in a parent folder will prevent formatting instead of letting any other formatter to run**
 
 **Disabled on untrusted workspaces**
+
+#### prettier.packageManager (default: `"npm"`)
+
+The package manager used to resolve global Prettier modules when `prettier.resolveGlobalModules` is enabled. Supported values are `"npm"`, `"yarn"`, and `"pnpm"`. Configure this setting to avoid being prompted to choose a package manager.
 
 #### prettier.documentSelectors
 
