@@ -166,6 +166,8 @@ Existing `coc.preferences.formatOnSaveFiletypes` settings also work and take pre
 **Note:** if prettier extension have lower priority, and document have other
 registered document format provider, prettier will be ignored.
 
+To select coc-prettier explicitly as the document formatter, set `"coc.preferences.formatterExtension": "coc-prettier"`. This setting can also be placed inside a language-specific section such as `[typescript]`.
+
 To disable coc-prettier for specific files, you can create `.prettierignore`
 file. Or use `"prettier.disableLanguages"` configuration, or
 `"prettier.formatterPriority": -1` configuration to make it not override format
