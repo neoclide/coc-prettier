@@ -16,9 +16,22 @@ import {
 
 let currentCallId = 0;
 
-const worker = new Worker(
-  url.pathToFileURL(path.join(__dirname, "../worker/prettier-instance-worker.js"))
-);
+let worker: Worker | undefined;
+
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(
+      url.pathToFileURL(path.join(__dirname, "../worker/prettier-instance-worker.js"))
+    );
+  }
+  return worker;
+}
+
+export async function disposeWorker(): Promise<void> {
+  const current = worker;
+  worker = undefined;
+  if (current) await current.terminate();
+}
 
 export const PrettierWorkerInstance: PrettierInstanceConstructor = class PrettierWorkerInstance
   implements PrettierInstance {
@@ -32,8 +45,11 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
 
   public version: string | null = null;
 
+  private worker: Worker;
+
   constructor(private modulePath: string) {
-    worker.on("message", ({ type, id, payload }) => {
+    this.worker = getWorker();
+    this.worker.on("message", ({ type, id, payload }) => {
       const resolver = this.messageResolvers.get(id);
       if (resolver) {
         this.messageResolvers.delete(id);
@@ -61,7 +77,7 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
     const promise = new Promise((resolve, reject) => {
       this.messageResolvers.set(callId, { resolve, reject });
     });
-    worker.postMessage({
+    this.worker.postMessage({
       type: "import",
       id: callId,
       payload: { modulePath: this.modulePath },
@@ -123,7 +139,7 @@ export const PrettierWorkerInstance: PrettierInstanceConstructor = class Prettie
     const promise = new Promise((resolve, reject) => {
       this.messageResolvers.set(callId, { resolve, reject });
     });
-    worker.postMessage({
+    this.worker.postMessage({
       type: "callMethod",
       id: callId,
       payload: {

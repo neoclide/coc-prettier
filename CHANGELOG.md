@@ -1,3 +1,9 @@
+## Unreleased
+
+- Skip edits when Prettier output already matches the document.
+- Refresh cached configuration and ignore paths when Prettier config or `.prettierignore` files change, including TypeScript config files.
+- Preserve `file://` plugin paths during module resolution.
+
 ## [9.3.2]
 
 - Fix issue with prettier v3.

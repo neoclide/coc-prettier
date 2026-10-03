@@ -18,7 +18,7 @@ import {
 import { loadNodeModule, resolveConfigPlugins } from "./ModuleLoader";
 import { PrettierInstance } from "./PrettierInstance";
 import { PrettierMainThreadInstance } from "./PrettierMainThreadInstance";
-import { PrettierWorkerInstance } from "./PrettierWorkerInstance";
+import { disposeWorker, PrettierWorkerInstance } from "./PrettierWorkerInstance";
 import {
   ModuleResolverInterface,
   PackageManagers,
@@ -422,17 +422,26 @@ export class ModuleResolver implements ModuleResolverInterface {
   /**
    * Clears the module and config cache
    */
+  public async clearModuleCache(): Promise<void> {
+    this.ignorePathCache.clear();
+    this.findPkgCache.clear();
+    await require('prettier').clearConfigCache();
+    await Promise.all([...this.path2Module.values()].map(module => module.clearConfigCache()));
+  }
+
   public async dispose() {
-    await require('prettier').clearConfigCache()
-    this.path2Module.forEach((module) => {
+    try {
+      await this.clearModuleCache();
+    } catch (error) {
+      this.loggingService.logError("Error clearing module cache.", error);
+    } finally {
+      this.path2Module.clear();
       try {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        module.clearConfigCache();
+        await disposeWorker();
       } catch (error) {
-        this.loggingService.logError("Error clearing module cache.", error);
+        this.loggingService.logError("Error stopping Prettier worker.", error);
       }
-    });
-    this.path2Module.clear();
+    }
   }
 
   private isInternalTestRoot(dir: string): boolean {
